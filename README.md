@@ -1,76 +1,31 @@
-# plugin-starter
+# Halo 内容格式助手
 
-Halo 2.0 插件开发快速开始模板。
+为 Halo 添加内容格式转换和导出的功能。
 
-## 开发环境
+**⚠️ 目前格式转换并不能完全保留原格式，部分语法可能在不同的编辑器中有不同的表现，建议谨慎使用。**
 
-插件开发的详细文档请查阅：<https://docs.halo.run/developer-guide/plugin/introduction>
+## 特性
 
-所需环境：
+- 支持 Markdown 和富文本格式的互转。
+- 支持导出文章内容，支持转换为 Markdown 文件导出。
 
-1. Java 17
-2. Node 20
-3. pnpm 9
-4. Docker (可选)
+## 使用方式
 
-克隆项目：
+1. 下载，目前提供以下两个下载方式：
+    - Halo 应用市场：<https://www.halo.run/store/apps/app-SUvBR>
+    - GitHub Releases：访问 [Releases](https://github.com/ruibaby/plugin-content-tools/releases) 下载 Assets 中的 JAR 文件。
+2. 安装，插件安装和更新方式可参考：<https://docs.halo.run/user-guide/plugins>
+3. 在文章管理页面中，点击文章的 `···` 按钮即可看到 **转换** 和 **导出** 的功能选项。
+4. 也可以在文章编辑页面顶部的编辑器选择框中选择 **内容格式转换器** 进行转换。
 
-```bash
-git clone git@github.com:halo-sigs/plugin-starter.git
+## 预览
 
-# 或者当你 fork 之后
+![](./images/plugin-content-tools-preview-1.png)
 
-git clone git@github.com:{your_github_id}/plugin-starter.git
-```
+![](./images/plugin-content-tools-preview-2.png)
 
-```bash
-cd path/to/plugin-starter
-```
+![](./images/plugin-content-tools-preview-3.png)
 
-### 运行方式 1（推荐）
+![](./images/plugin-content-tools-preview-4.png)
 
-> 此方式需要本地安装 Docker
-
-```bash
-# macOS / Linux
-./gradlew pnpmInstall
-
-# Windows
-./gradlew.bat pnpmInstall
-```
-
-```bash
-# macOS / Linux
-./gradlew haloServer
-
-# Windows
-./gradlew.bat haloServer
-```
-
-执行此命令后，会自动创建一个 Halo 的 Docker 容器并加载当前的插件，更多文档可查阅：<https://docs.halo.run/developer-guide/plugin/basics/devtools>
-
-### 运行方式 2
-
-> 此方式需要使用源码运行 Halo
-
-编译插件：
-
-```bash
-# macOS / Linux
-./gradlew build
-
-# Windows
-./gradlew.bat build
-```
-
-修改 Halo 配置文件：
-
-```yaml
-halo:
-  plugin:
-    runtime-mode: development
-    fixedPluginPath:
-      - "/path/to/plugin-starter"
-```
-
-最后重启 Halo 项目即可。
+![](./images/plugin-content-tools-preview-5.png)
