@@ -18,12 +18,15 @@ export class PostOperations {
       return;
     }
 
-    if (content.rawType === toType) {
+    if (content.rawType.toLowerCase() === toType) {
       Toast.warning(`当前文档已经是 ${toType} 格式，已忽略转换`);
       return;
     }
 
-    const converter = ConverterFactory.getConverter(content.rawType, toType);
+    const converter = ConverterFactory.getConverter(
+      content.rawType.toLowerCase(),
+      toType,
+    );
 
     const convertedContent = converter.convert(post, content);
 

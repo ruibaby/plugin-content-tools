@@ -22,7 +22,7 @@ export class ContentExporter {
           (type) => type.type === content.rawType?.toLowerCase(),
         )?.extension || "";
     } else if (exportType === "markdown") {
-      if (content.rawType === "html") {
+      if (content.rawType?.toLowerCase() === "html") {
         const converter = ConverterFactory.getConverter("html", "markdown");
         exportContent = converter.convert(post, content);
       } else {

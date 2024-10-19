@@ -9,7 +9,7 @@ export function convertPostContentToMarkdown(
   content: ContentWrapper,
   needsFrontMatter?: boolean,
 ): string {
-  if (content.rawType === "markdown") {
+  if (content.rawType?.toLowerCase() === "markdown") {
     return content.raw || "";
   }
 
@@ -38,7 +38,7 @@ export function convertPostContentToMarkdown(
 }
 
 export function convertPostContentToHTML(content: ContentWrapper): string {
-  if (content.rawType === "html") {
+  if (content.rawType?.toLowerCase() === "html") {
     return content.raw || "";
   }
 
