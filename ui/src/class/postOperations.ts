@@ -4,6 +4,7 @@ import {
   type Post,
 } from "@halo-dev/api-client";
 import { Toast } from "@halo-dev/components";
+import { AxiosError } from "axios";
 import { ConverterFactory } from "./converterFactory";
 
 export class PostOperations {
@@ -30,9 +31,14 @@ export class PostOperations {
 
     const convertedContent = converter.convert(post, content);
 
-    await this.updatePostContent(post, toType, convertedContent);
-
-    Toast.success("转换完成");
+    try {
+      await this.updatePostContent(post, toType, convertedContent);
+      Toast.success("转换完成");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        Toast.error(error.response?.data.detail || "转换失败，请重试");
+      }
+    }
   }
 
   private static async updatePostContent(
@@ -40,7 +46,7 @@ export class PostOperations {
     rawType: string,
     content: string,
   ): Promise<void> {
-    const inProgress = post.status?.inProgress;
+    const published = post.spec.publish;
 
     await consoleApiClient.content.post.updatePostContent({
       name: post.metadata.name,
@@ -51,18 +57,46 @@ export class PostOperations {
       },
     });
 
-    await coreApiClient.content.post.patchPost({
+    let attempt = 0;
+    const maxRetries = 3;
+    const retryDelay = 1000;
+    let success = false;
+
+    while (attempt < maxRetries && !success) {
+      try {
+        await coreApiClient.content.post.patchPost(
+          {
+            name: post.metadata.name,
+            jsonPatchInner: [
+              {
+                op: "add",
+                path: "/metadata/annotations/content.halo.run~1preferred-editor",
+                value: "",
+              },
+            ],
+          },
+          { mute: true },
+        );
+        success = true;
+      } catch (error) {
+        attempt++;
+        if (attempt < maxRetries) {
+          console.log(
+            `Optimistic lock error encountered. Retrying ${attempt}/${maxRetries}...`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, retryDelay)); // Wait before retrying
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    await consoleApiClient.content.post.publishPost({
       name: post.metadata.name,
-      jsonPatchInner: [
-        {
-          op: "remove",
-          path: "/metadata/annotations/content.halo.run~1preferred-editor",
-        },
-      ],
     });
 
-    if (!inProgress) {
-      await consoleApiClient.content.post.publishPost({
+    if (!published) {
+      await consoleApiClient.content.post.unpublishPost({
         name: post.metadata.name,
       });
     }
