@@ -29,10 +29,15 @@ export class PostOperations {
       toType,
     );
 
-    const convertedContent = converter.convert(post, content);
+    const convertedRawContent = converter.convert(post, content);
 
     try {
-      await this.updatePostContent(post, toType, convertedContent);
+      await this.updatePostContent(
+        post,
+        toType,
+        convertedRawContent,
+        content.content || "",
+      );
       Toast.success("转换完成");
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -44,6 +49,7 @@ export class PostOperations {
   private static async updatePostContent(
     post: Post,
     rawType: string,
+    raw: string,
     content: string,
   ): Promise<void> {
     const published = post.spec.publish;
@@ -52,8 +58,8 @@ export class PostOperations {
       name: post.metadata.name,
       content: {
         rawType,
-        raw: content,
-        content,
+        raw: raw,
+        content: content,
       },
     });
 

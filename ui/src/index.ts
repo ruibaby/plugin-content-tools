@@ -5,6 +5,7 @@ import { markRaw } from "vue";
 import { ContentExporter } from "./class/contentExporter";
 import { PostOperations } from "./class/postOperations";
 import ConverterEditor from "./components/ConverterEditor.vue";
+import PostCloneDropdownItem from "./components/PostCloneDropdownItem.vue";
 
 export default definePlugin({
   components: {},
@@ -36,20 +37,19 @@ export default definePlugin({
         },
       ];
     },
-    // @ts-expect-error
-    "post:list-item:operation:create": () => {
+    // @ts-expect-error don't important
+    // Needs upstream to fix this issue
+    "post:list-item:operation:create": (post: ListedPost) => {
       return [
         {
           priority: 21,
           component: markRaw(VDropdownDivider),
-          permissions: ["system:posts:view"],
         },
         {
           priority: 22,
           component: markRaw(VDropdownItem),
           label: "转换",
           visible: true,
-          permissions: ["system:posts:view"],
           children: [
             {
               priority: 0,
@@ -90,7 +90,6 @@ export default definePlugin({
           component: markRaw(VDropdownItem),
           label: "导出",
           visible: true,
-          permissions: ["system:posts:view"],
           children: [
             {
               priority: 0,
@@ -111,6 +110,13 @@ export default definePlugin({
               },
             },
           ],
+        },
+        {
+          priority: 24,
+          component: markRaw(PostCloneDropdownItem),
+          props: {
+            post: post,
+          },
         },
       ];
     },
