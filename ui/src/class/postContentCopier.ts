@@ -1,3 +1,4 @@
+import { processHTMLLinks, processMarkdownLinks } from '@/utils/content';
 import { copyHtmlAsRichText, copyText } from '@/utils/copy';
 import { convertPostContentToMarkdown } from '@/utils/markdown';
 import { consoleApiClient, type ContentWrapper, type Post } from '@halo-dev/api-client';
@@ -60,35 +61,13 @@ class PostContentCopier {
     if (!content) {
       throw new Error('No content to copy');
     }
-    copyHtmlAsRichText(this.processHTMLLinks(content));
+    copyHtmlAsRichText(processHTMLLinks(content));
     Toast.success('文章内容已复制为富文本格式');
   }
 
   private static copyAsMarkdown(markdown: string) {
-    copyText(this.processMarkdownLinks(markdown));
+    copyText(processMarkdownLinks(markdown));
     Toast.success('文章内容已复制为 Markdown 文本');
-  }
-
-  private static processHTMLLinks(content: string): string {
-    const htmlLinkRegex = /(src|href)=["'](?!http:\/\/|https:\/\/|mailto:|tel:)([^"']+)["']/gi;
-    return content.replace(htmlLinkRegex, (_, attr, url) => {
-      return `${attr}="${this.getAbsoluteUrl(url)}"`;
-    });
-  }
-
-  private static processMarkdownLinks(content: string): string {
-    const markdownLinkRegex = /(!?\[.*?\]\()(?!http:\/\/|https:\/\/|mailto:|tel:)([^)]+)(\))/g;
-    return content.replace(markdownLinkRegex, (_, prefix, url, suffix) => {
-      return `${prefix}${this.getAbsoluteUrl(url)}${suffix}`;
-    });
-  }
-
-  private static getAbsoluteUrl(url: string): string {
-    if (url.startsWith('/')) {
-      return `${location.origin}${url}`;
-    } else {
-      return `${location.origin}/${url}`;
-    }
   }
 
   private static async fetchPostContent(name: string): Promise<ContentWrapper> {

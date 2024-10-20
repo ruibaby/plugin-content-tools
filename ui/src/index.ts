@@ -109,6 +109,15 @@ export default definePlugin({
                 ContentExporter.export(post.post, 'markdown');
               },
             },
+            {
+              priority: 2,
+              component: markRaw(VDropdownItem),
+              label: '转换为 PDF 并导出',
+              visible: true,
+              action: (post: ListedPost) => {
+                ContentExporter.exportToPdf(post.post);
+              },
+            },
           ],
         },
         {
