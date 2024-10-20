@@ -2,8 +2,8 @@ import {
   ContentConverter,
   HtmlToMarkdownConverter,
   MarkdownToHtmlConverter,
-} from "./contentConverter";
-import ConverterManager from "./converterManager";
+} from './contentConverter';
+import ConverterManager from './converterManager';
 
 export class ConverterFactory {
   static getConverter(fromType: string, toType: string): ContentConverter {
@@ -13,12 +13,12 @@ export class ConverterFactory {
       throw new Error(`Unsupported conversion from ${fromType} to ${toType}`);
     }
 
-    if (fromType === "markdown" && toType === "html") {
+    if (fromType === 'markdown' && toType === 'html') {
       return new MarkdownToHtmlConverter();
-    } else if (fromType === "html" && toType === "markdown") {
+    } else if (fromType === 'html' && toType === 'markdown') {
       return new HtmlToMarkdownConverter();
     }
 
-    throw new Error("Converter not implemented");
+    throw new Error('Converter not implemented');
   }
 }

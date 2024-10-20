@@ -21,8 +21,8 @@ class ConverterManager {
   }
 
   private initializeConverters(): void {
-    this.addConverter("html", "markdown", "转换为 Markdown");
-    this.addConverter("markdown", "html", "转换为富文本");
+    this.addConverter('html', 'markdown', '转换为 Markdown');
+    this.addConverter('markdown', 'html', '转换为富文本');
   }
 
   private addConverter(fromType: string, toType: string, label: string): void {

@@ -1,23 +1,23 @@
-import type { ContentWrapper, Post } from "@halo-dev/api-client";
-import MarkdownIt from "markdown-it";
-import MarkdownItAnchor from "markdown-it-anchor";
-import TurndownService from "turndown";
-import { mergeMatter, readMatter } from "./matter";
+import type { ContentWrapper, Post } from '@halo-dev/api-client';
+import MarkdownIt from 'markdown-it';
+import MarkdownItAnchor from 'markdown-it-anchor';
+import TurndownService from 'turndown';
+import { mergeMatter, readMatter } from './matter';
 
 export function convertPostContentToMarkdown(
   post: Post,
   content: ContentWrapper,
-  needsFrontMatter?: boolean,
+  needsFrontMatter?: boolean
 ): string {
-  if (content.rawType?.toLowerCase() === "markdown") {
-    return content.raw || "";
+  if (content.rawType?.toLowerCase() === 'markdown') {
+    return content.raw || '';
   }
 
   const turndownService = new TurndownService({
-    headingStyle: "atx",
-    bulletListMarker: "-",
+    headingStyle: 'atx',
+    bulletListMarker: '-',
   });
-  const rawMarkdown = turndownService.turndown(content.raw || "");
+  const rawMarkdown = turndownService.turndown(content.raw || '');
 
   if (!needsFrontMatter) {
     return rawMarkdown;
@@ -38,12 +38,12 @@ export function convertPostContentToMarkdown(
 }
 
 export function convertPostContentToHTML(content: ContentWrapper): string {
-  if (content.rawType?.toLowerCase() === "html") {
-    return content.raw || "";
+  if (content.rawType?.toLowerCase() === 'html') {
+    return content.raw || '';
   }
 
   // Remove matter data
-  const markdown = readMatter(content.raw || "").content;
+  const markdown = readMatter(content.raw || '').content;
 
   const markdownIt = new MarkdownIt({
     html: true,

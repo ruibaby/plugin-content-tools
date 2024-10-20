@@ -3,7 +3,7 @@
 
 export {};
 
-declare module "axios" {
+declare module 'axios' {
   export interface AxiosRequestConfig {
     mute?: boolean;
   }

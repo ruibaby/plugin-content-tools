@@ -1,12 +1,12 @@
-import { randomUUID } from "@/utils/id";
+import { randomUUID } from '@/utils/id';
 import {
   consoleApiClient,
   type ContentWrapper,
   type Post,
   type PostRequest,
-} from "@halo-dev/api-client";
-import { Toast } from "@halo-dev/components";
-import { cloneDeep, set } from "lodash-es";
+} from '@halo-dev/api-client';
+import { Toast } from '@halo-dev/components';
+import { cloneDeep, set } from 'lodash-es';
 
 class PostCloner {
   static async clonePost(post: Post): Promise<void> {
@@ -19,16 +19,14 @@ class PostCloner {
         postRequest: newPostData,
       });
 
-      Toast.success("文章克隆成功，如果列表没有刷新，请手动刷新一次");
+      Toast.success('文章克隆成功，如果列表没有刷新，请手动刷新一次');
     } catch (error) {
-      console.error("Failed to clone post", error);
-      Toast.error("克隆文章失败");
+      console.error('Failed to clone post', error);
+      Toast.error('克隆文章失败');
     }
   }
 
-  private static async fetchPostContent(
-    postName: string,
-  ): Promise<ContentWrapper> {
+  private static async fetchPostContent(postName: string): Promise<ContentWrapper> {
     const { data } = await consoleApiClient.content.post.fetchPostHeadContent({
       name: postName,
     });
@@ -36,22 +34,15 @@ class PostCloner {
     return data;
   }
 
-  private static prepareNewPostData(
-    originalPost: Post,
-    content: ContentWrapper,
-  ): PostRequest {
+  private static prepareNewPostData(originalPost: Post, content: ContentWrapper): PostRequest {
     const postToCreate = cloneDeep(originalPost);
-    set(postToCreate, "spec.baseSnapshot", "");
-    set(postToCreate, "spec.headSnapshot", "");
-    set(postToCreate, "spec.releaseSnapshot", "");
-    set(
-      postToCreate,
-      "spec.slug",
-      `${originalPost.spec.slug}-${randomUUID().split("-")[0]}`,
-    );
-    set(postToCreate, "spec.title", originalPost.spec.title + "（副本）");
-    set(postToCreate, "spec.publish", false);
-    set(postToCreate, "metadata", {
+    set(postToCreate, 'spec.baseSnapshot', '');
+    set(postToCreate, 'spec.headSnapshot', '');
+    set(postToCreate, 'spec.releaseSnapshot', '');
+    set(postToCreate, 'spec.slug', `${originalPost.spec.slug}-${randomUUID().split('-')[0]}`);
+    set(postToCreate, 'spec.title', originalPost.spec.title + '（副本）');
+    set(postToCreate, 'spec.publish', false);
+    set(postToCreate, 'metadata', {
       name: randomUUID(),
     });
 

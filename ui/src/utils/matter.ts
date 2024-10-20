@@ -1,5 +1,5 @@
-import matter from "gray-matter";
-import yaml from "js-yaml";
+import matter from 'gray-matter';
+import yaml from 'js-yaml';
 
 const options = {
   engines: {
@@ -7,7 +7,7 @@ const options = {
       parse: (input: string) => yaml.load(input) as object,
       stringify: (data: object) => {
         return yaml.dump(data, {
-          styles: { "!!null": "empty" },
+          styles: { '!!null': 'empty' },
         });
       },
     },

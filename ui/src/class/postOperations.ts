@@ -1,21 +1,16 @@
-import {
-  consoleApiClient,
-  coreApiClient,
-  type Post,
-} from "@halo-dev/api-client";
-import { Toast } from "@halo-dev/components";
-import { AxiosError } from "axios";
-import { ConverterFactory } from "./converterFactory";
+import { consoleApiClient, coreApiClient, type Post } from '@halo-dev/api-client';
+import { Toast } from '@halo-dev/components';
+import { AxiosError } from 'axios';
+import { ConverterFactory } from './converterFactory';
 
 export class PostOperations {
   static async convertContent(post: Post, toType: string): Promise<void> {
-    const { data: content } =
-      await consoleApiClient.content.post.fetchPostHeadContent({
-        name: post.metadata.name,
-      });
+    const { data: content } = await consoleApiClient.content.post.fetchPostHeadContent({
+      name: post.metadata.name,
+    });
 
     if (!content.rawType) {
-      Toast.warning("原始类型未定义");
+      Toast.warning('原始类型未定义');
       return;
     }
 
@@ -24,24 +19,16 @@ export class PostOperations {
       return;
     }
 
-    const converter = ConverterFactory.getConverter(
-      content.rawType.toLowerCase(),
-      toType,
-    );
+    const converter = ConverterFactory.getConverter(content.rawType.toLowerCase(), toType);
 
     const convertedRawContent = converter.convert(post, content);
 
     try {
-      await this.updatePostContent(
-        post,
-        toType,
-        convertedRawContent,
-        content.content || "",
-      );
-      Toast.success("转换完成");
+      await this.updatePostContent(post, toType, convertedRawContent, content.content || '');
+      Toast.success('转换完成');
     } catch (error) {
       if (error instanceof AxiosError) {
-        Toast.error(error.response?.data.detail || "转换失败，请重试");
+        Toast.error(error.response?.data.detail || '转换失败，请重试');
       }
     }
   }
@@ -50,7 +37,7 @@ export class PostOperations {
     post: Post,
     rawType: string,
     raw: string,
-    content: string,
+    content: string
   ): Promise<void> {
     const published = post.spec.publish;
 
@@ -75,21 +62,19 @@ export class PostOperations {
             name: post.metadata.name,
             jsonPatchInner: [
               {
-                op: "add",
-                path: "/metadata/annotations/content.halo.run~1preferred-editor",
-                value: "",
+                op: 'add',
+                path: '/metadata/annotations/content.halo.run~1preferred-editor',
+                value: '',
               },
             ],
           },
-          { mute: true },
+          { mute: true }
         );
         success = true;
       } catch (error) {
         attempt++;
         if (attempt < maxRetries) {
-          console.log(
-            `Optimistic lock error encountered. Retrying ${attempt}/${maxRetries}...`,
-          );
+          console.log(`Optimistic lock error encountered. Retrying ${attempt}/${maxRetries}...`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay)); // Wait before retrying
         } else {
           throw error;
