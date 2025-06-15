@@ -1,11 +1,8 @@
 import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
-import { Dialog, VDropdownDivider, VDropdownItem } from '@halo-dev/components';
+import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
 import { definePlugin } from '@halo-dev/console-shared';
-import { markRaw } from 'vue';
-import { ContentExporter } from './class/contentExporter';
-import PostContentCopier from './class/postContentCopier';
-import { PostOperations } from './class/postOperations';
-import ConverterEditor from './components/ConverterEditor.vue';
+import 'uno.css';
+import { defineAsyncComponent, markRaw } from 'vue';
 import PostCloneDropdownItem from './components/PostCloneDropdownItem.vue';
 
 export default definePlugin({
@@ -32,7 +29,10 @@ export default definePlugin({
           name: 'content-converter',
           displayName: '内容格式转换器',
           logo: '/plugins/content-tools/assets/icon.svg',
-          component: ConverterEditor,
+          component: defineAsyncComponent({
+            loader: () => import('./components/ConverterEditor.vue'),
+            loadingComponent: VLoading,
+          }),
           rawType: content.rawType || 'html',
         },
       ];
@@ -62,6 +62,7 @@ export default definePlugin({
                   description:
                     '将 Markdown 转换为富文本格式并不能保证完全兼容，建议转换之后检查内容是否完整，如果有问题，可以在版本历史中找到之前的版本。',
                   onConfirm: async () => {
+                    const { PostOperations } = await import('./class/postOperations');
                     await PostOperations.convertContent(post.post, 'html');
                   },
                 });
@@ -78,7 +79,8 @@ export default definePlugin({
                   description:
                     '将富文本格式转换为 Markdown 格式并不能保证完全兼容，建议转换之后检查内容是否完整，如果有问题，可以在版本历史中找到之前的版本。',
                   onConfirm: async () => {
-                    PostOperations.convertContent(post.post, 'markdown');
+                    const { PostOperations } = await import('./class/postOperations');
+                    await PostOperations.convertContent(post.post, 'markdown');
                   },
                 });
               },
@@ -96,8 +98,9 @@ export default definePlugin({
               component: markRaw(VDropdownItem),
               label: '以原格式导出',
               visible: true,
-              action: (post: ListedPost) => {
-                ContentExporter.export(post.post, 'original');
+              action: async (post: ListedPost) => {
+                const { ContentExporter } = await import('./class/contentExporter');
+                await ContentExporter.export(post.post, 'original');
               },
             },
             {
@@ -105,8 +108,9 @@ export default definePlugin({
               component: markRaw(VDropdownItem),
               label: '转换为 Markdown 并导出',
               visible: true,
-              action: (post: ListedPost) => {
-                ContentExporter.export(post.post, 'markdown');
+              action: async (post: ListedPost) => {
+                const { ContentExporter } = await import('./class/contentExporter');
+                await ContentExporter.export(post.post, 'markdown');
               },
             },
             {
@@ -114,8 +118,9 @@ export default definePlugin({
               component: markRaw(VDropdownItem),
               label: '转换为 PDF 并导出',
               visible: true,
-              action: (post: ListedPost) => {
-                ContentExporter.exportToPdf(post.post);
+              action: async (post: ListedPost) => {
+                const { ContentExporter } = await import('./class/contentExporter');
+                await ContentExporter.exportToPdf(post.post);
               },
             },
           ],
@@ -133,6 +138,7 @@ export default definePlugin({
               label: '以原格式复制',
               visible: true,
               action: async (post: ListedPost) => {
+                const { default: PostContentCopier } = await import('./class/postContentCopier');
                 await PostContentCopier.copyPostContent(post.post, {
                   convertToMarkdown: false,
                 });
@@ -144,6 +150,7 @@ export default definePlugin({
               label: '转换为 Markdown 并复制',
               visible: true,
               action: async (post: ListedPost) => {
+                const { default: PostContentCopier } = await import('./class/postContentCopier');
                 await PostContentCopier.copyPostContent(post.post, {
                   convertToMarkdown: true,
                 });

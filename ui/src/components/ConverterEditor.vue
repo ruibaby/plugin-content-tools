@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ConverterManager, { type ConversionOption } from '@/class/converterManager';
-import { PostOperations } from '@/class/postOperations';
 import {
   consoleApiClient,
   coreApiClient,
@@ -55,6 +54,8 @@ async function handleConvert(option: ConversionOption) {
         return;
       }
 
+      const { PostOperations } = await import('@/class/postOperations');
+
       await PostOperations.convertContent(post.value, option.toType);
 
       localStorage.removeItem('editor-provider-name');
@@ -69,15 +70,15 @@ async function handleConvert(option: ConversionOption) {
 }
 </script>
 <template>
-  <div class="bg-white">
-    <div class="flex pt-20 items-center size-full flex-col">
+  <div class=":uno: bg-white">
+    <div class=":uno: size-full flex flex-col items-center pt-20">
       <div>
-        <h2 class="text-2xl font-medium">内容格式转换器</h2>
-        <p class="text-sm text-gray-600 mt-4">请选择你要转换的格式：</p>
-        <ul class="mt-4 space-y-2">
+        <h2 class=":uno: text-2xl font-medium">内容格式转换器</h2>
+        <p class=":uno: mt-4 text-sm text-gray-600">请选择你要转换的格式：</p>
+        <ul class=":uno: mt-4 space-y-2">
           <li v-for="option in converterOptions" :key="option.toType + option.fromType">
             <button
-              class="p-2 text-sm border hover:border-primary transition-all w-96 rounded-md text-gray-600 hover:text-gray-900"
+              class=":uno: hover:border-primary w-96 border rounded-md p-2 text-sm text-gray-600 transition-all hover:text-gray-900"
               @click="handleConvert(option)"
             >
               {{ option.label }}
