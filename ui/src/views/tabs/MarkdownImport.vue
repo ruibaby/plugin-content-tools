@@ -156,8 +156,9 @@ function findMatchingImageFile(imagePath: string): File | undefined {
 
 async function uploadImageFile(imageFile: File): Promise<Attachment> {
   try {
+    const imageBlob = await imageFile.arrayBuffer();
     const { data } = await ucApiClient.storage.attachment.createAttachmentForPost({
-      file: imageFile,
+      file: new File([imageBlob], imageFile.name, { type: imageFile.type }),
       waitForPermalink: true,
     });
 
