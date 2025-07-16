@@ -3,11 +3,35 @@ import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/com
 import { definePlugin } from '@halo-dev/console-shared';
 import 'uno.css';
 import { defineAsyncComponent, markRaw } from 'vue';
+import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
 import PostCloneDropdownItem from './components/PostCloneDropdownItem.vue';
 
 export default definePlugin({
   components: {},
-  routes: [],
+  routes: [
+    {
+      parentName: 'ToolsRoot',
+      route: {
+        path: 'post-import',
+        name: 'PostImport',
+        component: defineAsyncComponent({
+          loader: () => import('./views/PostImport.vue'),
+          loadingComponent: VLoading,
+        }),
+        meta: {
+          title: '文章导入',
+          description: '导入文章到 Halo',
+          searchable: true,
+          permissions: ['*'],
+          menu: {
+            name: '文章导入',
+            icon: markRaw(MingcuteFileImportLine),
+            priority: 0,
+          },
+        },
+      },
+    },
+  ],
   extensionPoints: {
     'editor:create': async () => {
       const urlParams = new URLSearchParams(window.location.search);
