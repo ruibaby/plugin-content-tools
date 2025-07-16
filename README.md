@@ -1,6 +1,6 @@
-# Halo 内容格式助手
+# Halo 内容助手
 
-为 Halo 添加内容格式转换和导出的功能。
+为 Halo 添加内容格式转换、文章导入导出等功能。
 
 **⚠️ 目前格式转换并不能完全保留原格式，部分语法可能在不同的编辑器中有不同的表现，建议谨慎使用。**
 
@@ -8,6 +8,7 @@
 
 - 支持 Markdown 和富文本格式的互转。
 - 支持导出文章内容，支持转换为 Markdown 文件导出，支持导出为 PDF。
+- 支持 Markdown、Word（.doc、.docx）文档导入，包含关联的图片资源。
 - 支持文章克隆。
 - 支持复制文章内容。
 
@@ -31,3 +32,7 @@
 ![](./images/plugin-content-tools-preview-4.png)
 
 ![](./images/plugin-content-tools-preview-5.png)
+
+![](./images/plugin-content-tools-preview-6.png)
+
+![](./images/plugin-content-tools-preview-7.png)
