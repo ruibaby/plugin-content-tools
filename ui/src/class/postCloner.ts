@@ -6,7 +6,8 @@ import {
   type PostRequest,
 } from '@halo-dev/api-client';
 import { Toast } from '@halo-dev/components';
-import { cloneDeep, set } from 'lodash-es';
+import { cloneDeep } from 'es-toolkit';
+import { set } from 'es-toolkit/compat';
 
 class PostCloner {
   static async clonePost(post: Post): Promise<void> {
