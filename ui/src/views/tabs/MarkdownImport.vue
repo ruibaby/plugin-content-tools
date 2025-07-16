@@ -334,7 +334,7 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
 </script>
 <template>
   <div>
-    <div v-if="showAlert" class=":uno: w-full lg:w-1/2 mb-5">
+    <div v-if="showAlert" class=":uno: mb-5 w-full lg:w-1/2">
       <VAlert title="提示" @close="showAlert = false">
         <template #description>
           <ul class=":uno: ml-2 list-disc list-inside space-y-1">
@@ -344,7 +344,7 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
             </li>
             <li>
               图片会上传到与个人中心关联的存储策略，请提前在
-              <a class="text-gray-900 hover:text-gray-600" href="/console/settings?tab=user"
+              <a class=":uno: text-gray-900 hover:text-gray-600" href="/console/settings?tab=user"
                 >用户设置</a
               >
               中设置。
@@ -396,9 +396,9 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
 
     <div class=":uno: mt-5">
       <FormKit
+        v-model="convertToHtml"
         type="checkbox"
         label="转为富文本格式"
-        v-model="convertToHtml"
         :disabled="isBusy"
         help="可能出现格式不兼容的问题，建议谨慎使用"
       ></FormKit>

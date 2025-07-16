@@ -37,11 +37,11 @@ const activeTab = useLocalStorage('plugin:content-tools:import-active-tab', 'mar
         <VTabbar
           v-model:active-id="activeTab"
           :items="tabs.map((item) => ({ id: item.id, label: item.label }))"
-          class="w-full !rounded-none"
+          class=":uno: w-full !rounded-none"
           type="outline"
         ></VTabbar>
       </template>
-      <div class="bg-white">
+      <div class=":uno: bg-white">
         <template v-for="tab in tabs" :key="tab.id">
           <component :is="tab.component" v-if="activeTab === tab.id" />
         </template>

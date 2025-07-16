@@ -296,13 +296,19 @@ const showAlert = useSessionStorage('plugin:content-tools:word-import-alert', tr
 </script>
 <template>
   <div>
-    <div v-if="showAlert" class=":uno: w-full lg:w-1/2 mb-5">
+    <div v-if="showAlert" class=":uno: mb-5 w-full lg:w-1/2">
       <VAlert title="提示" @close="showAlert = false">
         <template #description>
           <ul class=":uno: ml-2 list-disc list-inside space-y-1">
             <li>由于 Word 文件的复杂性，可能无法完美解析内容格式，建议导入之后自行调整。</li>
             <li>支持同时导入 Word 文件中的图片资源，其他资源暂不支持。</li>
-            <li>图片会上传到与个人中心关联的存储策略，请提前在 <a class="text-gray-900 hover:text-gray-600" href="/console/settings?tab=user">用户设置</a> 中设置。</li>
+            <li>
+              图片会上传到与个人中心关联的存储策略，请提前在
+              <a class=":uno: text-gray-900 hover:text-gray-600" href="/console/settings?tab=user"
+                >用户设置</a
+              >
+              中设置。
+            </li>
           </ul>
         </template>
       </VAlert>
@@ -310,7 +316,7 @@ const showAlert = useSessionStorage('plugin:content-tools:word-import-alert', tr
     <VSpace>
       <VButton :disabled="isBusy" @click="fileInput?.click()">选择 Word 文档</VButton>
       <VButton :disabled="isBusy" @click="folderInput?.click()">选择 Word 文档文件夹</VButton>
-      <VButton :disabled="isBusy" v-if="importQueue.length > 0" @click="handleClear">
+      <VButton v-if="importQueue.length > 0" :disabled="isBusy" @click="handleClear">
         清空文件
       </VButton>
 
@@ -334,9 +340,9 @@ const showAlert = useSessionStorage('plugin:content-tools:word-import-alert', tr
 
     <div class=":uno: mt-5">
       <FormKit
+        v-model="convertToMarkdown"
         type="checkbox"
         label="转为 Markdown 格式"
-        v-model="convertToMarkdown"
         :disabled="isBusy"
         help="可能出现格式不兼容的问题，建议谨慎使用"
       ></FormKit>
