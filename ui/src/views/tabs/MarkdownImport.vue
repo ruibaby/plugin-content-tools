@@ -178,7 +178,12 @@ async function processMarkdownImages(markdownContent: string): Promise<string> {
   let processedContent = markdownContent;
 
   for (const imagePath of imageReferences) {
-    const matchedImageFile = findMatchingImageFile(imagePath);
+    let matchedImageFile = findMatchingImageFile(imagePath);
+
+    // if not found, try to decode the image path
+    if (!matchedImageFile) {
+      matchedImageFile = findMatchingImageFile(decodeURIComponent(imagePath));
+    }
 
     if (matchedImageFile) {
       try {
