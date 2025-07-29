@@ -2,7 +2,7 @@ import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
 import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
 import { definePlugin } from '@halo-dev/console-shared';
 import 'uno.css';
-import { defineAsyncComponent, markRaw } from 'vue';
+import { defineAsyncComponent, h, markRaw } from 'vue';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
 import PostCloneDropdownItem from './components/PostCloneDropdownItem.vue';
 
@@ -113,41 +113,13 @@ export default definePlugin({
         },
         {
           priority: 23,
-          component: markRaw(VDropdownItem),
-          label: '导出',
-          visible: true,
-          children: [
-            {
-              priority: 0,
-              component: markRaw(VDropdownItem),
-              label: '以原格式导出',
-              visible: true,
-              action: async (post: ListedPost) => {
-                const { ContentExporter } = await import('./class/contentExporter');
-                await ContentExporter.export(post.post, 'original');
-              },
-            },
-            {
-              priority: 1,
-              component: markRaw(VDropdownItem),
-              label: '转换为 Markdown 并导出',
-              visible: true,
-              action: async (post: ListedPost) => {
-                const { ContentExporter } = await import('./class/contentExporter');
-                await ContentExporter.export(post.post, 'markdown');
-              },
-            },
-            {
-              priority: 2,
-              component: markRaw(VDropdownItem),
-              label: '转换为 PDF 并导出',
-              visible: true,
-              action: async (post: ListedPost) => {
-                const { ContentExporter } = await import('./class/contentExporter');
-                await ContentExporter.exportToPdf(post.post);
-              },
-            },
-          ],
+          component: defineAsyncComponent({
+            loader: () => import('./components/PostExportDropdownItem.vue'),
+            loadingComponent: h(VDropdownItem, { disabled: true }, '加载中'),
+          }),
+          props: {
+            post: post,
+          },
         },
         {
           priority: 24,

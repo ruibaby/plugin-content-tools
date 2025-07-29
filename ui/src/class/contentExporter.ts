@@ -1,25 +1,39 @@
-import { ContentTypes } from '@/constants';
-import { downloadContent } from '@/utils';
+import { downloadContent, downloadContentWithImages } from '@/utils';
 import { processHTMLLinks } from '@/utils/content';
+import { downloadImageAsBlob, extractImageReferencesFromContent } from '@/utils/image';
 import { consoleApiClient, type Post } from '@halo-dev/api-client';
 import { Toast } from '@halo-dev/components';
 import { ConverterFactory } from './converterFactory';
 
-type ExportType = 'original' | 'markdown';
+export type ExportType = 'markdown' | 'html' | 'pdf';
+export type ImageExportMode = 'file' | 'inline';
+
+const ExtensionMap: Record<ExportType, string> = {
+  markdown: 'md',
+  html: 'html',
+  pdf: 'pdf',
+};
 
 export class ContentExporter {
-  static async export(post: Post, exportType: ExportType): Promise<void> {
+  static async export(
+    post: Post,
+    exportType: ExportType,
+    includeImages: boolean,
+    imageExportMode: ImageExportMode
+  ): Promise<void> {
+    if (exportType === 'pdf') {
+      await this.exportToPdf(post);
+      return;
+    }
+
     const { data: content } = await consoleApiClient.content.post.fetchPostHeadContent({
       name: post.metadata.name,
     });
 
     let exportContent: string;
-    let fileExtension: string;
 
-    if (exportType === 'original') {
-      exportContent = content.raw || '';
-      fileExtension =
-        ContentTypes.find((type) => type.type === content.rawType?.toLowerCase())?.extension || '';
+    if (exportType === 'html') {
+      exportContent = content.content || '';
     } else if (exportType === 'markdown') {
       if (content.rawType?.toLowerCase() === 'html') {
         const converter = ConverterFactory.getConverter('html', 'markdown');
@@ -27,12 +41,91 @@ export class ContentExporter {
       } else {
         exportContent = content.raw || '';
       }
-      fileExtension = 'md';
     } else {
       throw new Error('Unsupported export type');
     }
 
-    downloadContent(exportContent, post.spec.title, fileExtension);
+    const fileExtension = ExtensionMap[exportType];
+
+    if (!includeImages) {
+      downloadContent(exportContent, post.spec.title, ExtensionMap[exportType]);
+      return;
+    }
+
+    if (imageExportMode === 'file') {
+      await this.exportWithImages(post, exportContent, exportType, fileExtension);
+      return;
+    }
+
+    if (imageExportMode === 'inline') {
+      await this.exportWithInlineImages(post, exportContent, exportType, fileExtension);
+      return;
+    }
+  }
+
+  private static async exportWithInlineImages(
+    post: Post,
+    content: string,
+    contentType: ExportType,
+    fileExtension: string
+  ): Promise<void> {
+    const imageReferences = extractImageReferencesFromContent(content, contentType);
+
+    if (imageReferences.length === 0) {
+      downloadContent(content, post.spec.title, fileExtension);
+      return;
+    }
+
+    let processedContent = content;
+
+    for (const imagePath of imageReferences) {
+      try {
+        let absoluteImageUrl: string;
+
+        if (imagePath.startsWith('/')) {
+          absoluteImageUrl = `${location.origin}${imagePath}`;
+        } else if (!imagePath.startsWith('http')) {
+          absoluteImageUrl = `${location.origin}/${imagePath}`;
+        } else {
+          absoluteImageUrl = imagePath;
+        }
+
+        const imageBlob = await downloadImageAsBlob(absoluteImageUrl);
+        const base64Data = await this.blobToBase64(imageBlob);
+        const mimeType = imageBlob.type;
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
+        if (contentType === 'markdown') {
+          const escapedImagePath = imagePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${escapedImagePath}\\)`, 'g');
+          processedContent = processedContent.replace(regex, `![$1](${dataUrl})`);
+        } else if (contentType === 'html') {
+          const escapedImagePath = imagePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`src=["']${escapedImagePath}["']`, 'g');
+          processedContent = processedContent.replace(regex, `src="${dataUrl}"`);
+        }
+      } catch (error) {
+        console.warn(`Failed to inline image ${imagePath}:`, error);
+      }
+    }
+
+    downloadContent(processedContent, post.spec.title, fileExtension);
+  }
+
+  private static blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        } else {
+          reject(new Error('Failed to convert blob to base64'));
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   static async exportToPdf(post: Post): Promise<void> {
@@ -89,6 +182,53 @@ export class ContentExporter {
       console.error('Failed to generate pdf file: ', error);
       Toast.error('PDF 导出失败');
     }
+  }
+
+  private static async exportWithImages(
+    post: Post,
+    content: string,
+    contentType: ExportType,
+    fileExtension: string
+  ): Promise<void> {
+    const imageReferences = extractImageReferencesFromContent(content, contentType);
+
+    if (imageReferences.length === 0) {
+      downloadContent(content, post.spec.title, fileExtension);
+      return;
+    }
+
+    const images: Array<{ blob: Blob; filename: string; path?: string }> = [];
+
+    for (const imagePath of imageReferences) {
+      try {
+        let absoluteImageUrl: string;
+
+        if (imagePath.startsWith('/')) {
+          absoluteImageUrl = `${location.origin}${imagePath}`;
+        } else if (!imagePath.startsWith('http')) {
+          absoluteImageUrl = `${location.origin}/${imagePath}`;
+        } else {
+          absoluteImageUrl = imagePath;
+        }
+
+        const imageBlob = await downloadImageAsBlob(absoluteImageUrl);
+
+        const encodedFileName = imagePath.split('/').pop() || `image_${images.length + 1}.png`;
+        const fileName = decodeURIComponent(encodedFileName);
+
+        const decodedPath = decodeURIComponent(imagePath);
+
+        images.push({
+          blob: imageBlob,
+          filename: fileName,
+          path: decodedPath,
+        });
+      } catch (error) {
+        console.warn(`Failed to download image ${imagePath}:`, error);
+      }
+    }
+
+    await downloadContentWithImages(content, post.spec.title, fileExtension, images);
   }
 
   private static waitForImages(iframe: HTMLIFrameElement): Promise<void> {
