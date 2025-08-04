@@ -1,8 +1,8 @@
 import type { ContentWrapper, Post } from '@halo-dev/api-client';
 import MarkdownIt from 'markdown-it';
 import MarkdownItAnchor from 'markdown-it-anchor';
-import TurndownService from 'turndown';
 import { mergeMatter, readMatter } from './matter';
+import turndownService from './turndown';
 
 export function convertPostContentToMarkdown(
   post: Post,
@@ -13,10 +13,6 @@ export function convertPostContentToMarkdown(
     return content.raw || '';
   }
 
-  const turndownService = new TurndownService({
-    headingStyle: 'atx',
-    bulletListMarker: '-',
-  });
   const rawMarkdown = turndownService.turndown(content.raw || '');
 
   if (!needsFrontMatter) {

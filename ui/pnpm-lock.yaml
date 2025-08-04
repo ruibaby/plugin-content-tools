@@ -17,6 +17,9 @@ importers:
       '@halo-dev/console-shared':
         specifier: ^2.21.0
         version: 2.21.0(axios@1.10.0)(vue-router@4.2.5(vue@3.5.17(typescript@5.5.4)))(vue@3.5.17(typescript@5.5.4))
+      '@joplin/turndown-plugin-gfm':
+        specifier: ^1.0.62
+        version: 1.0.62
       '@tanstack/vue-query':
         specifier: '4'
         version: 4.37.1(vue@3.5.17(typescript@5.5.4))
@@ -421,6 +424,9 @@ packages:
 
   '@iconify/utils@2.3.0':
     resolution: {integrity: sha512-GmQ78prtwYW6EtzXRU1rY+KwOKfz32PD7iJh6Iyqw68GiKuoZ2A6pRtzWONz5VQJbp50mEjXh/7NkumtrAgRKA==}
+
+  '@joplin/turndown-plugin-gfm@1.0.62':
+    resolution: {integrity: sha512-Ts7cZ0Y9rIRgNkPtpXYB3BVjjSP2eeWzrPnQvJgNTC+FpopSjoaYjLQvPcEj1d6JcTMegnYoZK98/WJhm02Uaw==}
 
   '@jridgewell/gen-mapping@0.3.5':
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -3167,6 +3173,8 @@ snapshots:
       mlly: 1.7.4
     transitivePeerDependencies:
       - supports-color
+
+  '@joplin/turndown-plugin-gfm@1.0.62': {}
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:

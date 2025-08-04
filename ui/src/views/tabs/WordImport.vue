@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { randomUUID } from '@/utils/id';
+import turndownService from '@/utils/turndown';
 import {
   consoleApiClient,
   ucApiClient,
@@ -17,7 +18,6 @@ import {
 import { useSessionStorage } from '@vueuse/core';
 import mammoth from 'mammoth';
 import PQueue from 'p-queue';
-import TurndownService from 'turndown';
 import { computed, reactive, ref } from 'vue';
 import MingcuteCheckCircleFill from '~icons/mingcute/check-circle-fill';
 import MingcuteCloseCircleLine from '~icons/mingcute/close-circle-line';
@@ -269,10 +269,6 @@ async function createPost(item: ImportItem, html: string) {
   };
 
   if (convertToMarkdown.value) {
-    const turndownService = new TurndownService({
-      headingStyle: 'atx',
-      bulletListMarker: '-',
-    });
     const markdown = turndownService.turndown(html);
     postToCreate.content!.raw = markdown;
     postToCreate.content!.content = html;
