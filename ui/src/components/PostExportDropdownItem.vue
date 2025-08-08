@@ -35,12 +35,7 @@ async function onSubmit(data: ExportForm) {
   const { ContentExporter } = await import('@/class/contentExporter');
   try {
     exporting.value = true;
-    await ContentExporter.export(
-      post.post,
-      data.type,
-      data.includeImages,
-      data.imageExportMode
-    );
+    await ContentExporter.export(post.post, data.type, data.includeImages, data.imageExportMode);
     modal.value?.close();
     Toast.success('导出成功');
   } catch (error) {
@@ -54,19 +49,19 @@ async function onSubmit(data: ExportForm) {
 <template>
   <VDropdownItem @click="display = true">导出</VDropdownItem>
   <VModal
+    v-if="display"
+    ref="modal"
     :centered="false"
     title="导出"
     mount-to-body
-    ref="modal"
-    v-if="display"
     @close="display = false"
   >
     <FormKit
+      id="post-export-form"
+      v-slot="{ value }"
       type="form"
       name="post-export-form"
-      id="post-export-form"
       @submit="onSubmit"
-      #default="{ value }"
     >
       <FormKit label="导出格式" type="select" name="type" :options="exportTypeOptions" />
       <FormKit v-if="value.type !== 'pdf'" label="包含图片" type="checkbox" name="includeImages" />
@@ -86,7 +81,7 @@ async function onSubmit(data: ExportForm) {
     <template #footer>
       <VSpace>
         <!-- @vue-ignore -->
-        <VButton type="secondary" @click="$formkit.submit('post-export-form')" :loading="exporting">
+        <VButton type="secondary" :loading="exporting" @click="$formkit.submit('post-export-form')">
           导出
         </VButton>
         <VButton @click="modal?.close()">取消</VButton>

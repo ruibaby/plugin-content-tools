@@ -17,7 +17,6 @@ export function isImageFile(file: File): boolean {
   );
 }
 
-
 /**
  * Extract image references from markdown content
  *
@@ -52,7 +51,11 @@ export function extractHTMLImageReferences(htmlContent: string): string[] {
 
   while ((match = imageRegex.exec(htmlContent)) !== null) {
     const imagePath = match[1];
-    if (!imagePath.startsWith('http://') && !imagePath.startsWith('https://') && !imagePath.startsWith('data:')) {
+    if (
+      !imagePath.startsWith('http://') &&
+      !imagePath.startsWith('https://') &&
+      !imagePath.startsWith('data:')
+    ) {
       images.push(imagePath);
     }
   }
@@ -101,7 +104,7 @@ export function getImageFileExtension(imageUrl: string): string {
   const pathname = url.pathname;
   const extension = pathname.split('.').pop()?.toLowerCase();
 
-  if (extension && SUPPORTED_IMAGE_EXTENSIONS.some(ext => ext.slice(1) === extension)) {
+  if (extension && SUPPORTED_IMAGE_EXTENSIONS.some((ext) => ext.slice(1) === extension)) {
     return extension;
   }
 
