@@ -28,6 +28,7 @@ import MingcuteTimeLine from '~icons/mingcute/time-line';
 const fileInput = ref<HTMLInputElement | null>(null);
 const folderInput = ref<HTMLInputElement | null>(null);
 const convertToMarkdown = ref(false);
+const publishAfterImport = ref(true);
 
 interface ImportItem {
   id: string;
@@ -279,9 +280,11 @@ async function createPost(item: ImportItem, html: string) {
     postRequest: postToCreate,
   });
 
-  await consoleApiClient.content.post.publishPost({
-    name: data.metadata.name,
-  });
+  if (publishAfterImport.value) {
+    await consoleApiClient.content.post.publishPost({
+      name: data.metadata.name,
+    });
+  }
 }
 
 function handleClear() {
@@ -341,6 +344,16 @@ const showAlert = useSessionStorage('plugin:content-tools:word-import-alert', tr
         label="转为 Markdown 格式"
         :disabled="isBusy"
         help="可能出现格式不兼容的问题，建议谨慎使用"
+      ></FormKit>
+    </div>
+
+    <div class=":uno: mt-3">
+      <FormKit
+        v-model="publishAfterImport"
+        type="checkbox"
+        label="导入后发布文章"
+        :disabled="isBusy"
+        help="取消选择时，导入的文章将保存为草稿"
       ></FormKit>
     </div>
 
