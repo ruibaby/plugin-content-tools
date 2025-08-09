@@ -32,6 +32,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const folderInput = ref<HTMLInputElement | null>(null);
 const imageInput = ref<HTMLInputElement | null>(null);
 const convertToHtml = ref(false);
+const publishAfterImport = ref(true);
 
 interface ImportItem {
   id: string;
@@ -322,9 +323,11 @@ async function createPost(item: ImportItem, raw: string) {
     postRequest: postToCreate,
   });
 
-  await consoleApiClient.content.post.publishPost({
-    name: data.metadata.name,
-  });
+  if (publishAfterImport.value) {
+    await consoleApiClient.content.post.publishPost({
+      name: data.metadata.name,
+    });
+  }
 }
 
 function handleClear() {
@@ -406,6 +409,16 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
         label="转为富文本格式"
         :disabled="isBusy"
         help="可能出现格式不兼容的问题，建议谨慎使用"
+      ></FormKit>
+    </div>
+
+    <div class=":uno: mt-3">
+      <FormKit
+        v-model="publishAfterImport"
+        type="checkbox"
+        label="导入后发布文章"
+        :disabled="isBusy"
+        help="取消选择时，导入的文章将保存为草稿"
       ></FormKit>
     </div>
 
