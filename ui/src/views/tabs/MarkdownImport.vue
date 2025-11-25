@@ -268,8 +268,8 @@ async function createPost(item: ImportItem, raw: string) {
     slug: string;
     description: string;
     excerpt: string;
-    categories?: string[];
-    tags?: string[];
+    categories?: string[] | string;
+    tags?: string[] | string;
   };
 
   const html = convertPostContentToHTML({
@@ -279,6 +279,14 @@ async function createPost(item: ImportItem, raw: string) {
   });
 
   const finalExcerpt = matterData.excerpt || matterData.description;
+
+  if (typeof matterData.categories === 'string') {
+    matterData.categories = [matterData.categories];
+  }
+
+  if (typeof matterData.tags === 'string') {
+    matterData.tags = [matterData.tags];
+  }
 
   const categoryNames = await getCategoryNamesByDisplayNames(matterData.categories);
   const tagNames = await getTagNamesByDisplayNames(matterData.tags);
