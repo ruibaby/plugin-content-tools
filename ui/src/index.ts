@@ -63,12 +63,14 @@ export default definePlugin({
         {
           priority: 21,
           component: markRaw(VDropdownDivider),
+          permissions: ['*'],
         },
         {
           priority: 22,
           component: markRaw(VDropdownItem),
           label: '转换',
           visible: true,
+          permissions: ['*'],
           children: [
             {
               priority: 0,
@@ -110,6 +112,7 @@ export default definePlugin({
             loader: () => import('./components/PostExportDropdownItem.vue'),
             loadingComponent: h(VDropdownItem, { disabled: true }, '加载中'),
           }),
+          permissions: ['*'],
           props: {
             post: post,
           },
@@ -119,7 +122,7 @@ export default definePlugin({
           component: markRaw(VDropdownItem),
           label: '复制文章内容',
           visible: true,
-          permissions: ['system:posts:view'],
+          permissions: ['*'],
           children: [
             {
               priority: 0,
@@ -149,6 +152,7 @@ export default definePlugin({
         },
         {
           priority: 25,
+          permissions: ['*'],
           component: defineAsyncComponent({
             loader: () => import('./components/PostCloneDropdownItem.vue'),
             loadingComponent: h(VDropdownItem, { disabled: true }, '加载中'),

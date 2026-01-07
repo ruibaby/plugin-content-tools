@@ -1,11 +1,6 @@
 <script lang="ts" setup>
 import turndownService from '@/utils/turndown';
-import {
-  consoleApiClient,
-  ucApiClient,
-  type Attachment,
-  type PostRequest,
-} from '@halo-dev/api-client';
+import { consoleApiClient, type Attachment, type PostRequest } from '@halo-dev/api-client';
 import {
   VAlert,
   VButton,
@@ -127,9 +122,8 @@ async function uploadImageBuffer(imageBuffer: ArrayBuffer, filename: string): Pr
     const blob = new Blob([imageBuffer]);
     const file = new File([blob], filename, { type: 'image/png' });
 
-    const { data } = await ucApiClient.storage.attachment.createAttachmentForPost({
+    const { data } = await consoleApiClient.storage.attachment.uploadAttachmentForConsole({
       file: file,
-      waitForPermalink: true,
     });
 
     return data;

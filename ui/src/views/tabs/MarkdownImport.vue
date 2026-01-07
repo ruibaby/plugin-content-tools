@@ -4,12 +4,7 @@ import { extractImageReferences, isImageFile } from '@/utils/image';
 import { convertPostContentToHTML } from '@/utils/markdown';
 import { readMatter } from '@/utils/matter';
 import { getTagNamesByDisplayNames } from '@/utils/tag';
-import {
-  consoleApiClient,
-  ucApiClient,
-  type Attachment,
-  type PostRequest,
-} from '@halo-dev/api-client';
+import { consoleApiClient, type Attachment, type PostRequest } from '@halo-dev/api-client';
 import {
   VAlert,
   VButton,
@@ -158,9 +153,8 @@ function findMatchingImageFile(imagePath: string): File | undefined {
 async function uploadImageFile(imageFile: File): Promise<Attachment> {
   try {
     const imageBlob = await imageFile.arrayBuffer();
-    const { data } = await ucApiClient.storage.attachment.createAttachmentForPost({
+    const { data } = await consoleApiClient.storage.attachment.uploadAttachmentForConsole({
       file: new File([imageBlob], imageFile.name, { type: imageFile.type }),
-      waitForPermalink: true,
     });
 
     return data;
