@@ -6,7 +6,7 @@ metadata:
     store.halo.run/app-id: app-SUvBR
 spec:
   enabled: true
-  requires: ">=2.20.0"
+  requires: ">=2.22.0"
   author:
     name: Ryan Wang
     website: https://github.com/ruibaby

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { randomUUID } from '@/utils/id';
 import turndownService from '@/utils/turndown';
 import {
   consoleApiClient,
@@ -15,6 +14,7 @@ import {
   VEntityField,
   VSpace,
 } from '@halo-dev/components';
+import { utils } from '@halo-dev/ui-shared';
 import { useSessionStorage } from '@vueuse/core';
 import mammoth from 'mammoth';
 import PQueue from 'p-queue';
@@ -84,7 +84,7 @@ function onFilesSelected(event: Event) {
 
       if (!isDuplicate) {
         importQueue.push({
-          id: randomUUID(),
+          id: utils.id.uuid(),
           file,
           filename: file.name,
           status: 'pending',
@@ -109,7 +109,7 @@ function onFolderSelected(event: Event) {
     if (isWordFile(file)) {
       if (!existingFileNames.has(file.name)) {
         importQueue.push({
-          id: randomUUID(),
+          id: utils.id.uuid(),
           file,
           filename: file.name,
           status: 'pending',
@@ -153,7 +153,7 @@ async function processWordDocument(file: File): Promise<{ html: string }> {
           convertImage: mammoth.images.imgElement(async (image: any) => {
             try {
               const imageBuffer = await image.read();
-              const filename = `${fileName}_${randomUUID()}.png`;
+              const filename = `${fileName}_${utils.id.uuid()}.png`;
               const attachment = await uploadImageBuffer(imageBuffer, filename);
               return {
                 src: attachment.status?.permalink || '',
@@ -258,7 +258,7 @@ async function createPost(item: ImportItem, html: string) {
       apiVersion: 'content.halo.run/v1alpha1',
       kind: 'Post',
       metadata: {
-        name: randomUUID(),
+        name: utils.id.uuid(),
         annotations: {},
       },
     },

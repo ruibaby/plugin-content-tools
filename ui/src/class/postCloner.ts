@@ -1,4 +1,3 @@
-import { randomUUID } from '@/utils/id';
 import {
   consoleApiClient,
   type ContentWrapper,
@@ -6,6 +5,7 @@ import {
   type PostRequest,
 } from '@halo-dev/api-client';
 import { Toast } from '@halo-dev/components';
+import { utils } from '@halo-dev/ui-shared';
 import { cloneDeep } from 'es-toolkit';
 import { set } from 'es-toolkit/compat';
 
@@ -40,16 +40,20 @@ class PostCloner {
     set(postToCreate, 'spec.baseSnapshot', '');
     set(postToCreate, 'spec.headSnapshot', '');
     set(postToCreate, 'spec.releaseSnapshot', '');
-    set(postToCreate, 'spec.slug', `${originalPost.spec.slug}-${randomUUID().split('-')[0]}`);
+    set(postToCreate, 'spec.slug', `${originalPost.spec.slug}-${utils.id.uuid().split('-')[0]}`);
     set(postToCreate, 'spec.title', originalPost.spec.title + '（副本）');
     set(postToCreate, 'spec.publish', false);
     set(postToCreate, 'metadata', {
-      name: randomUUID(),
+      name: utils.id.uuid(),
     });
 
     return {
       post: postToCreate,
-      content: content,
+      content: {
+        content: content.content || '',
+        raw: content.raw || '',
+        rawType: content.rawType || '',
+      },
     };
   }
 }

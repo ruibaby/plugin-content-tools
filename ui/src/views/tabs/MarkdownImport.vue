@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { getCategoryNamesByDisplayNames } from '@/utils/category';
-import { randomUUID } from '@/utils/id';
 import { extractImageReferences, isImageFile } from '@/utils/image';
 import { convertPostContentToHTML } from '@/utils/markdown';
 import { readMatter } from '@/utils/matter';
@@ -19,6 +18,7 @@ import {
   VEntityField,
   VSpace,
 } from '@halo-dev/components';
+import { utils } from '@halo-dev/ui-shared';
 import { useSessionStorage } from '@vueuse/core';
 import PQueue from 'p-queue';
 import { computed, reactive, ref } from 'vue';
@@ -91,7 +91,7 @@ function onFilesSelected(event: Event) {
 
       if (!isDuplicate) {
         importQueue.push({
-          id: randomUUID(),
+          id: utils.id.uuid(),
           file,
           filename: file.name,
           status: 'pending',
@@ -116,7 +116,7 @@ function onFolderSelected(event: Event) {
     if (file.type === 'text/markdown' || file.name.endsWith('.md')) {
       if (!existingFileNames.has(file.name)) {
         importQueue.push({
-          id: randomUUID(),
+          id: utils.id.uuid(),
           file,
           filename: file.name,
           status: 'pending',
@@ -316,7 +316,7 @@ async function createPost(item: ImportItem, raw: string) {
       apiVersion: 'content.halo.run/v1alpha1',
       kind: 'Post',
       metadata: {
-        name: randomUUID(),
+        name: utils.id.uuid(),
         annotations: {},
       },
     },

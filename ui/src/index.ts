@@ -1,10 +1,9 @@
 import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
 import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
-import { definePlugin } from '@halo-dev/console-shared';
+import { definePlugin } from '@halo-dev/ui-shared';
 import 'uno.css';
-import { defineAsyncComponent, h, markRaw } from 'vue';
+import { defineAsyncComponent, h, markRaw, type Ref } from 'vue';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
-import PostCloneDropdownItem from './components/PostCloneDropdownItem.vue';
 
 export default definePlugin({
   components: {},
@@ -14,10 +13,7 @@ export default definePlugin({
       route: {
         path: 'post-import',
         name: 'PostImport',
-        component: defineAsyncComponent({
-          loader: () => import('./views/PostImport.vue'),
-          loadingComponent: VLoading,
-        }),
+        component: () => import('./views/PostImport.vue'),
         meta: {
           title: '文章导入',
           description: '导入文章到 Halo',
@@ -62,8 +58,7 @@ export default definePlugin({
       ];
     },
     // @ts-expect-error don't important
-    // Needs upstream to fix this issue
-    'post:list-item:operation:create': (post: ListedPost) => {
+    'post:list-item:operation:create': (post: Ref<ListedPost>) => {
       return [
         {
           priority: 21,
@@ -79,7 +74,6 @@ export default definePlugin({
               priority: 0,
               component: markRaw(VDropdownItem),
               label: '转换为富文本格式',
-              visible: true,
               action: async (post: ListedPost) => {
                 Dialog.warning({
                   title: '转换为富文本格式',
@@ -96,7 +90,6 @@ export default definePlugin({
               priority: 1,
               component: markRaw(VDropdownItem),
               label: '转换为 Markdown 格式',
-              visible: true,
               action: async (post: ListedPost) => {
                 Dialog.warning({
                   title: '转换为 Markdown 格式',
@@ -156,7 +149,10 @@ export default definePlugin({
         },
         {
           priority: 25,
-          component: markRaw(PostCloneDropdownItem),
+          component: defineAsyncComponent({
+            loader: () => import('./components/PostCloneDropdownItem.vue'),
+            loadingComponent: h(VDropdownItem, { disabled: true }, '加载中'),
+          }),
           props: {
             post: post,
           },
