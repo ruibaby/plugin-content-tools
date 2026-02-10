@@ -53,15 +53,15 @@ importers:
       markdown-it-anchor:
         specifier: ^9.2.0
         version: 9.2.0(@types/markdown-it@14.1.2)(markdown-it@14.1.0)
-      p-queue:
-        specifier: ^8.1.1
-        version: 8.1.1
       turndown:
         specifier: ^7.2.2
         version: 7.2.2
       vue:
         specifier: ^3.5.27
         version: 3.5.27(typescript@5.5.4)
+      vue-reactive-queue:
+        specifier: ^0.0.1
+        version: 0.0.1(vue@3.5.27(typescript@5.5.4))
     devDependencies:
       '@halo-dev/ui-plugin-bundler-kit':
         specifier: 2.22.0
@@ -1633,9 +1633,6 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
-  eventemitter3@5.0.1:
-    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
-
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -2156,14 +2153,6 @@ packages:
   p-locate@5.0.0:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
-
-  p-queue@8.1.1:
-    resolution: {integrity: sha512-aNZ+VfjobsWryoiPnEApGGmf5WmNsCo9xu8dfaYamG5qaLP7ClhLN6NgsFe6SwJ2UbLEBK5dv9x8Mn5+RVhMWQ==}
-    engines: {node: '>=18'}
-
-  p-timeout@6.1.4:
-    resolution: {integrity: sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==}
-    engines: {node: '>=14.16'}
 
   package-manager-detector@1.3.0:
     resolution: {integrity: sha512-ZsEbbZORsyHuO00lY1kV3/t72yp6Ysay6Pd17ZAlNGuGwmWDLCJxFpRs0IzfXfj1o4icJOkUEioexFHzyPurSQ==}
@@ -2764,6 +2753,11 @@ packages:
         optional: true
       vue:
         optional: true
+
+  vue-reactive-queue@0.0.1:
+    resolution: {integrity: sha512-b+dEyMihaBK+AGN23iDQs8GyGWBZmjh8yM2GZ0LqKCyHAUX/DEgXb31pH4N/XHarC+5aop0O3lmFBdBUN6IQOQ==}
+    peerDependencies:
+      vue: '>=3.0.0'
 
   vue-resize@2.0.0-alpha.1:
     resolution: {integrity: sha512-7+iqOueLU7uc9NrMfrzbG8hwMqchfVfSzpVlCMeJQe4pyibqyoifDNbKTZvwxZKDvGkB+PdFeKvnGZMoEb8esg==}
@@ -4591,8 +4585,6 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
-  eventemitter3@5.0.1: {}
-
   events@3.3.0: {}
 
   evp_bytestokey@1.0.3:
@@ -5131,13 +5123,6 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
-
-  p-queue@8.1.1:
-    dependencies:
-      eventemitter3: 5.0.1
-      p-timeout: 6.1.4
-
-  p-timeout@6.1.4: {}
 
   package-manager-detector@1.3.0: {}
 
@@ -5728,6 +5713,10 @@ snapshots:
       webpack: 5.99.9
     optionalDependencies:
       '@vue/compiler-sfc': 3.5.27
+      vue: 3.5.27(typescript@5.5.4)
+
+  vue-reactive-queue@0.0.1(vue@3.5.27(typescript@5.5.4)):
+    dependencies:
       vue: 3.5.27(typescript@5.5.4)
 
   vue-resize@2.0.0-alpha.1(vue@3.5.27(typescript@5.5.4)):

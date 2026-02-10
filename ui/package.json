@@ -35,9 +35,9 @@
     "mammoth": "^1.11.0",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
-    "p-queue": "^8.1.1",
     "turndown": "^7.2.2",
-    "vue": "^3.5.27"
+    "vue": "^3.5.27",
+    "vue-reactive-queue": "^0.0.1"
   },
   "devDependencies": {
     "@halo-dev/ui-plugin-bundler-kit": "2.22.0",
