@@ -300,7 +300,7 @@ async function createPost(item: ImportItem, raw: string) {
         visible: 'PUBLIC',
         priority: 0,
         excerpt: {
-          autoGenerate: !!finalExcerpt,
+          autoGenerate: !finalExcerpt,
           raw: finalExcerpt,
         },
         categories: categoryNames,
