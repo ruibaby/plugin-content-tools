@@ -7,13 +7,14 @@ import { ref, useTemplateRef } from 'vue';
 interface ExportForm {
   type: ExportType;
   includeImages: boolean;
-  imageExportMode: ImageExportMode;
+  imageExportMode?: ImageExportMode;
 }
 
 const exportTypeOptions: { label: string; value: ExportType }[] = [
   { label: 'Markdown', value: 'markdown' },
   { label: 'HTML', value: 'html' },
   { label: 'PDF', value: 'pdf' },
+  { label: 'JSON', value: 'json' },
 ];
 
 const imageExportModeOptions: { label: string; value: ImageExportMode }[] = [
@@ -35,7 +36,8 @@ async function onSubmit(data: ExportForm) {
   const { ContentExporter } = await import('@/class/contentExporter');
   try {
     exporting.value = true;
-    await ContentExporter.export(post.post, data.type, data.includeImages, data.imageExportMode);
+    const imageExportMode = data.type === 'json' ? 'file' : (data.imageExportMode ?? 'file');
+    await ContentExporter.export(post.post, data.type, data.includeImages, imageExportMode);
     modal.value?.close();
     Toast.success('导出成功');
   } catch (error) {
@@ -66,7 +68,7 @@ async function onSubmit(data: ExportForm) {
       <FormKit label="导出格式" type="select" name="type" :options="exportTypeOptions" />
       <FormKit v-if="value.type !== 'pdf'" label="包含图片" type="checkbox" name="includeImages" />
       <FormKit
-        v-if="value.type !== 'pdf' && value.includeImages"
+        v-if="value.type !== 'pdf' && value.includeImages && value.type !== 'json'"
         type="select"
         label="图片导出方式"
         name="imageExportMode"
@@ -77,6 +79,9 @@ async function onSubmit(data: ExportForm) {
             : '导出为内嵌时，图片会以 Base64 的形式嵌入到导出文件中'
         "
       ></FormKit>
+      <p v-if="value.type === 'json' && value.includeImages" class=":uno: text-sm text-gray-600 pt-4">
+        JSON 导出包含图片时仅支持文件模式，文章数据和图片会一起打包为 zip。
+      </p>
     </FormKit>
     <template #footer>
       <VSpace>

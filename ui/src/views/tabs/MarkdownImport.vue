@@ -233,7 +233,7 @@ async function createPost(file: File, raw: string) {
         visible: 'PUBLIC',
         priority: 0,
         excerpt: {
-          autoGenerate: !!finalExcerpt,
+          autoGenerate: !finalExcerpt,
           raw: finalExcerpt,
         },
         categories: categoryNames,

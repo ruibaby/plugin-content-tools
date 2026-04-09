@@ -1,17 +1,19 @@
 import { downloadContent, downloadContentWithImages } from '@/utils';
 import { processHTMLLinks } from '@/utils/content';
 import { downloadImageAsBlob, extractImageReferencesFromContent } from '@/utils/image';
-import { consoleApiClient, type Post } from '@halo-dev/api-client';
+import { consoleApiClient, type ContentWrapper, type Post, type PostRequest } from '@halo-dev/api-client';
 import { Toast } from '@halo-dev/components';
+import { cloneDeep } from 'es-toolkit';
 import { ConverterFactory } from './converterFactory';
 
-export type ExportType = 'markdown' | 'html' | 'pdf';
+export type ExportType = 'markdown' | 'html' | 'pdf' | 'json';
 export type ImageExportMode = 'file' | 'inline';
 
 const ExtensionMap: Record<ExportType, string> = {
   markdown: 'md',
   html: 'html',
   pdf: 'pdf',
+  json: 'json',
 };
 
 export class ContentExporter {
@@ -29,6 +31,19 @@ export class ContentExporter {
     const { data: content } = await consoleApiClient.content.post.fetchPostHeadContent({
       name: post.metadata.name,
     });
+
+    if (exportType === 'json') {
+      const postRequest = this.buildPostRequest(post, content);
+      const exportContent = JSON.stringify(postRequest, null, 2);
+
+      if (!includeImages) {
+        downloadContent(exportContent, post.spec.title, ExtensionMap[exportType]);
+        return;
+      }
+
+      await this.exportJsonWithImages(post, exportContent, postRequest);
+      return;
+    }
 
     let exportContent: string;
 
@@ -197,25 +212,72 @@ export class ContentExporter {
       return;
     }
 
+    const images = await this.downloadImages(imageReferences);
+
+    await downloadContentWithImages(content, post.spec.title, fileExtension, images);
+  }
+
+  private static buildPostRequest(post: Post, content: ContentWrapper): PostRequest {
+    return {
+      post: cloneDeep(post),
+      content: {
+        raw: content.raw || '',
+        content: content.content || '',
+        rawType: content.rawType || '',
+      },
+    };
+  }
+
+  private static async exportJsonWithImages(
+    post: Post,
+    content: string,
+    postRequest: PostRequest
+  ): Promise<void> {
+    const imageReferences = this.collectPostRequestImageReferences(postRequest);
+
+    if (imageReferences.length === 0) {
+      downloadContent(content, post.spec.title, ExtensionMap.json);
+      return;
+    }
+
+    const images = await this.downloadImages(imageReferences);
+    await downloadContentWithImages(content, post.spec.title, ExtensionMap.json, images);
+  }
+
+  private static collectPostRequestImageReferences(postRequest: PostRequest): string[] {
+    const imageReferences = new Set<string>();
+    const rawType = postRequest.content.rawType?.toLowerCase();
+
+    if (postRequest.content.raw && rawType) {
+      for (const imagePath of extractImageReferencesFromContent(postRequest.content.raw, rawType)) {
+        imageReferences.add(imagePath);
+      }
+    }
+
+    if (postRequest.content.content) {
+      for (const imagePath of extractImageReferencesFromContent(postRequest.content.content, 'html')) {
+        imageReferences.add(imagePath);
+      }
+    }
+
+    const cover = postRequest.post.spec.cover;
+    if (cover && !cover.startsWith('data:')) {
+      imageReferences.add(cover);
+    }
+
+    return Array.from(imageReferences);
+  }
+
+  private static async downloadImages(
+    imageReferences: string[]
+  ): Promise<Array<{ blob: Blob; filename: string; path?: string }>> {
     const images: Array<{ blob: Blob; filename: string; path?: string }> = [];
 
     for (const imagePath of imageReferences) {
       try {
-        let absoluteImageUrl: string;
-
-        if (imagePath.startsWith('/')) {
-          absoluteImageUrl = `${location.origin}${imagePath}`;
-        } else if (!imagePath.startsWith('http')) {
-          absoluteImageUrl = `${location.origin}/${imagePath}`;
-        } else {
-          absoluteImageUrl = imagePath;
-        }
-
-        const imageBlob = await downloadImageAsBlob(absoluteImageUrl);
-
+        const imageBlob = await downloadImageAsBlob(this.toAbsoluteImageUrl(imagePath));
         const encodedFileName = imagePath.split('/').pop() || `image_${images.length + 1}.png`;
         const fileName = decodeURIComponent(encodedFileName);
-
         const decodedPath = decodeURIComponent(imagePath);
 
         images.push({
@@ -228,7 +290,19 @@ export class ContentExporter {
       }
     }
 
-    await downloadContentWithImages(content, post.spec.title, fileExtension, images);
+    return images;
+  }
+
+  private static toAbsoluteImageUrl(imagePath: string): string {
+    if (imagePath.startsWith('/')) {
+      return `${location.origin}${imagePath}`;
+    }
+
+    if (!imagePath.startsWith('http')) {
+      return `${location.origin}/${imagePath}`;
+    }
+
+    return imagePath;
   }
 
   private static waitForImages(iframe: HTMLIFrameElement): Promise<void> {
