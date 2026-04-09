@@ -21,6 +21,14 @@ const tabs = [
       loadingComponent: VLoading,
     }),
   },
+  {
+    id: 'json',
+    label: 'JSON 导入',
+    component: defineAsyncComponent({
+      loader: () => import('./tabs/JsonImport.vue'),
+      loadingComponent: VLoading,
+    }),
+  },
 ];
 
 const activeTab = useLocalStorage('plugin:content-tools:import-active-tab', 'markdown');
