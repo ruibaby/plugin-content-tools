@@ -51,19 +51,19 @@ async function onSubmit(data: ExportForm) {
 }
 
 const imageExportModeHelp = computed(() => {
-  if(exportType.value === 'json') {
+  if (exportType.value === 'json') {
     return 'JSON 导出包含图片时仅支持文件模式，文章数据和图片会一起打包为 ZIP 文件';
   }
   return imageExportMode.value === 'file'
     ? '导出为文件时，图片会以附件的形式导出，与文章压缩在一起'
-    : '导出为内嵌时，图片会以 Base64 的形式嵌入到导出文件中'
+    : '导出为内嵌时，图片会以 Base64 的形式嵌入到导出文件中';
 });
 
 const exportTypeHelp = computed(() => {
-  if(exportType.value === 'json') {
+  if (exportType.value === 'json') {
     return '导出之后可以在工具 -> 文章导入 -> JSON 导入选项卡中导入文章，也可以在另外的 Halo 站点中导入';
   }
-})
+});
 </script>
 <template>
   <VDropdownItem @click="display = true">导出</VDropdownItem>
@@ -82,7 +82,14 @@ const exportTypeHelp = computed(() => {
       name="post-export-form"
       @submit="onSubmit"
     >
-      <FormKit v-model="exportType" label="导出格式" type="select" name="type" :options="exportTypeOptions" :help="exportTypeHelp" />
+      <FormKit
+        v-model="exportType"
+        label="导出格式"
+        type="select"
+        name="type"
+        :options="exportTypeOptions"
+        :help="exportTypeHelp"
+      />
       <FormKit v-if="value.type !== 'pdf'" label="包含图片" type="checkbox" name="includeImages" />
       <FormKit
         v-if="value.type !== 'pdf' && value.includeImages"

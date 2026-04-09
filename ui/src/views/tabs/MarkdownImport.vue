@@ -282,9 +282,11 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
               文件和图片的文件夹。
             </li>
             <li>
-              图片会上传到与个人中心关联的存储策略，请提前在
-              <a class=":uno: text-gray-900 hover:text-gray-600" href="/console/settings?tab=user"
-                >用户设置</a
+              图片会上传到管理端附件配置中的存储策略，请提前在
+              <a
+                class=":uno: text-gray-900 hover:text-gray-600"
+                href="/console/settings?tab=attachment"
+                >附件配置</a
               >
               中设置。
             </li>
@@ -423,7 +425,10 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
                     v-else-if="task.status === 'rejected'"
                     class=":uno: inline-flex items-center gap-2"
                   >
-                    <MingcuteCloseCircleLine v-tooltip="task.error?.toString()" class=":uno: text-red-500" />
+                    <MingcuteCloseCircleLine
+                      v-tooltip="task.error?.toString()"
+                      class=":uno: text-red-500"
+                    />
                     <VButton size="sm" :disabled="isBusy" @click="retry(task.id)"> 重试 </VButton>
                   </div>
                   <MingcuteTimeLine v-else class=":uno: text-gray-500" />

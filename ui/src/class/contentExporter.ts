@@ -1,7 +1,12 @@
 import { downloadContent, downloadContentWithImages } from '@/utils';
 import { processHTMLLinks } from '@/utils/content';
 import { downloadImageAsBlob, extractImageReferencesFromContent } from '@/utils/image';
-import { consoleApiClient, type ContentWrapper, type Post, type PostRequest } from '@halo-dev/api-client';
+import {
+  consoleApiClient,
+  type ContentWrapper,
+  type Post,
+  type PostRequest,
+} from '@halo-dev/api-client';
 import { Toast } from '@halo-dev/components';
 import { cloneDeep } from 'es-toolkit';
 import { ConverterFactory } from './converterFactory';
@@ -255,7 +260,10 @@ export class ContentExporter {
     }
 
     if (postRequest.content.content) {
-      for (const imagePath of extractImageReferencesFromContent(postRequest.content.content, 'html')) {
+      for (const imagePath of extractImageReferencesFromContent(
+        postRequest.content.content,
+        'html'
+      )) {
         imageReferences.add(imagePath);
       }
     }

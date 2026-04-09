@@ -298,7 +298,10 @@ async function resolveAttachment(
   return await uploadCache.get(cacheKey);
 }
 
-function findMatchingImageSource(imagePath: string, imageSources: ImageSource[]): ImageSource | undefined {
+function findMatchingImageSource(
+  imagePath: string,
+  imageSources: ImageSource[]
+): ImageSource | undefined {
   const normalizedImagePath = normalizePath(imagePath);
   const imageFileName = normalizedImagePath.split('/').pop() || normalizedImagePath;
 
@@ -362,7 +365,7 @@ function preparePostRequestForImport(postRequest: PostRequest): PostRequest {
   // TODO: Support categories and tags
   postRequest.post.spec.categories = [];
   postRequest.post.spec.tags = [];
-  postRequest.post.status = {}
+  postRequest.post.status = {};
 
   return postRequest;
 }
@@ -406,7 +409,9 @@ const showAlert = useSessionStorage('plugin:content-tools:json-import-alert', tr
             <li>如果 ZIP 已经提前解压，可以额外选择图片文件夹作为图片来源。</li>
             <li>
               图片会上传到管理端附件配置中的存储策略，请提前在
-              <a class=":uno: text-gray-900 hover:text-gray-600" href="/console/settings?tab=attachment"
+              <a
+                class=":uno: text-gray-900 hover:text-gray-600"
+                href="/console/settings?tab=attachment"
                 >附件配置</a
               >
               中设置。
@@ -522,7 +527,10 @@ const showAlert = useSessionStorage('plugin:content-tools:json-import-alert', tr
                     v-else-if="task.status === 'rejected'"
                     class=":uno: inline-flex items-center gap-2"
                   >
-                    <MingcuteCloseCircleLine v-tooltip="task.error?.toString()" class=":uno: text-red-500" />
+                    <MingcuteCloseCircleLine
+                      v-tooltip="task.error?.toString()"
+                      class=":uno: text-red-500"
+                    />
                     <VButton size="sm" :disabled="isBusy" @click="retry(task.id)"> 重试 </VButton>
                   </div>
                   <MingcuteTimeLine v-else class=":uno: text-gray-500" />
