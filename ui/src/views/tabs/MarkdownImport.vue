@@ -15,8 +15,8 @@ import {
 } from '@halo-dev/components';
 import { utils } from '@halo-dev/ui-shared';
 import { useSessionStorage } from '@vueuse/core';
-import PQueue from 'p-queue';
 import { computed, reactive, ref } from 'vue';
+import { useQueue } from 'vue-reactive-queue';
 import MingcuteCheckCircleFill from '~icons/mingcute/check-circle-fill';
 import MingcuteCloseCircleLine from '~icons/mingcute/close-circle-line';
 import MingcuteLoading3Fill from '~icons/mingcute/loading-3-fill';
@@ -29,39 +29,18 @@ const imageInput = ref<HTMLInputElement | null>(null);
 const convertToHtml = ref(false);
 const publishAfterImport = ref(true);
 
-interface ImportItem {
-  id: string;
-  file: File;
-  filename: string;
-  status: 'pending' | 'processing' | 'success' | 'error';
-  error?: string;
-}
-
-const importQueue = reactive<ImportItem[]>([]);
-const imageFiles = reactive<File[]>([]);
-const queue = new PQueue({ concurrency: 3 });
-
-const queueStats = computed(() => {
-  const total = importQueue.length;
-  const pending = importQueue.filter((item) => item.status === 'pending').length;
-  const processing = importQueue.filter((item) => item.status === 'processing').length;
-  const success = importQueue.filter((item) => item.status === 'success').length;
-  const error = importQueue.filter((item) => item.status === 'error').length;
-
-  return {
-    total,
-    pending,
-    processing,
-    success,
-    error,
-    queueSize: queue.size,
-    queuePending: queue.pending,
-    imageCount: imageFiles.length,
-  };
+const { tasks, add, stats, clear, resume, retry, pause } = useQueue<File>({
+  concurrency: 3,
+  immediate: false,
+  onFinished() {
+    pause();
+  },
 });
 
+const imageFiles = reactive<File[]>([]);
+
 const isBusy = computed(() => {
-  return queueStats.value.processing > 0;
+  return stats.value.running > 0;
 });
 
 async function readFileContent(file: File): Promise<string> {
@@ -80,17 +59,12 @@ function onFilesSelected(event: Event) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     if (file.type === 'text/markdown' || file.name.endsWith('.md')) {
-      const isDuplicate = importQueue.some(
-        (item) => item.file.name === file.name && item.file.size === file.size
+      const isDuplicate = tasks.value.some(
+        (item) => item.meta?.name === file.name && item.meta?.size === file.size
       );
 
       if (!isDuplicate) {
-        importQueue.push({
-          id: utils.id.uuid(),
-          file,
-          filename: file.name,
-          status: 'pending',
-        });
+        add(async () => await processItem(file), file);
       }
     }
   }
@@ -102,7 +76,7 @@ function onFolderSelected(event: Event) {
   const files = (event.target as HTMLInputElement).files;
   if (!files || files.length === 0) return;
 
-  const existingFileNames = new Set(importQueue.map((item) => item.filename));
+  const existingFileNames = new Set(tasks.value.map((item) => item.meta?.name));
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -110,12 +84,7 @@ function onFolderSelected(event: Event) {
 
     if (file.type === 'text/markdown' || file.name.endsWith('.md')) {
       if (!existingFileNames.has(file.name)) {
-        importQueue.push({
-          id: utils.id.uuid(),
-          file,
-          filename: file.name,
-          status: 'pending',
-        });
+        add(async () => await processItem(file), file);
         existingFileNames.add(file.name);
       }
     } else if (isImageFile(file)) {
@@ -199,61 +168,25 @@ async function processMarkdownImages(markdownContent: string): Promise<string> {
   return processedContent;
 }
 
-async function processItem(item: ImportItem): Promise<void> {
-  item.status = 'processing';
-
-  try {
-    const raw = await readFileContent(item.file);
-
-    await createPost(item, raw);
-    item.status = 'success';
-  } catch (error) {
-    console.error('Failed to process item:', error);
-    item.status = 'error';
-    item.error = error instanceof Error ? error.message : String(error);
-    throw error;
-  }
-}
-
-async function handleStart() {
-  if (isBusy.value) return;
-
-  const pendingItems = importQueue.filter(
-    (item) => item.status === 'pending' || item.status === 'error'
-  );
-
-  if (pendingItems.length === 0) return;
-
-  const promises = pendingItems.map((item) => queue.add(() => processItem(item)));
-  await Promise.allSettled(promises);
+async function processItem(file: File): Promise<void> {
+  const raw = await readFileContent(file);
+  await createPost(file, raw);
 }
 
 function handleRetryAll() {
   if (isBusy.value) return;
 
-  importQueue
-    .filter((item) => item.status === 'error')
+  tasks.value
+    .filter((item) => item.status === 'rejected')
     .forEach((item) => {
-      item.status = 'pending';
-      item.error = undefined;
+      retry(item.id);
     });
-
-  handleStart();
 }
 
-function retryItem(item: ImportItem) {
-  if (isBusy.value) return;
-
-  item.status = 'pending';
-  item.error = undefined;
-
-  queue.add(() => processItem(item));
-}
-
-async function createPost(item: ImportItem, raw: string) {
+async function createPost(file: File, raw: string) {
   const processedRaw = await processMarkdownImages(raw);
 
-  const fileName = item.file.name.replace(/\.md$/, '');
+  const fileName = file.name.replace(/\.md$/, '');
 
   const parsedMatter = readMatter(processedRaw);
 
@@ -332,10 +265,6 @@ async function createPost(item: ImportItem, raw: string) {
   }
 }
 
-function handleClear() {
-  importQueue.length = 0;
-}
-
 function handleClearImages() {
   imageFiles.length = 0;
 }
@@ -372,9 +301,7 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
       <VButton :disabled="isBusy" @click="fileInput?.click()">选择 Markdown 文件</VButton>
       <VButton :disabled="isBusy" @click="folderInput?.click()">选择 Markdown 文件夹</VButton>
       <VButton :disabled="isBusy" @click="imageInput?.click()"> 选择图片文件夹 </VButton>
-      <VButton v-if="importQueue.length > 0" :disabled="isBusy" @click="handleClear">
-        清空文件
-      </VButton>
+      <VButton v-if="tasks.length > 0" :disabled="isBusy" @click="clear"> 清空文件 </VButton>
       <VButton v-if="imageFiles.length > 0" :disabled="isBusy" @click="handleClearImages">
         清空图片
       </VButton>
@@ -424,42 +351,42 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
       ></FormKit>
     </div>
 
-    <div v-if="importQueue.length > 0" class=":uno: mt-5 space-y-4">
+    <div v-if="tasks.length > 0" class=":uno: mt-5 space-y-4">
       <div class=":uno: flex items-center justify-between">
         <div class=":uno: h-7 flex items-center gap-3 text-sm text-gray-600">
           <span>
-            总计: <b class=":uno: text-gray-900">{{ queueStats.total }}</b>
+            总计: <b class=":uno: text-gray-900">{{ tasks.length }}</b>
           </span>
           <span>
             待处理:
-            <b class=":uno: text-gray-900">{{ queueStats.pending }}</b>
+            <b class=":uno: text-gray-900">{{ stats.pending }}</b>
           </span>
           <span>
             处理中:
-            <b class=":uno: text-gray-900">{{ queueStats.processing }}</b>
+            <b class=":uno: text-gray-900">{{ stats.running }}</b>
           </span>
           <span>
-            成功: <b class=":uno: text-gray-900">{{ queueStats.success }}</b>
+            成功: <b class=":uno: text-gray-900">{{ stats.completed }}</b>
           </span>
           <span>
             失败:
-            <b :class="{ ':uno: !text-red-500': queueStats.error > 0 }" class=":uno: text-gray-900">
-              {{ queueStats.error }}
+            <b :class="{ ':uno: !text-red-500': stats.failed > 0 }" class=":uno: text-gray-900">
+              {{ stats.failed }}
             </b>
           </span>
-          <span v-if="queueStats.imageCount > 0" class=":uno: text-blue-600">
-            图片: <b>{{ queueStats.imageCount }}</b>
+          <span v-if="imageFiles.length > 0" class=":uno: text-blue-600">
+            图片: <b>{{ imageFiles.length }}</b>
           </span>
         </div>
         <VSpace>
-          <VButton v-if="queueStats.error > 0" :disabled="isBusy" size="sm" @click="handleRetryAll">
+          <VButton v-if="stats.failed > 0" :disabled="isBusy" size="sm" @click="handleRetryAll">
             重试所有
           </VButton>
           <VButton
             type="secondary"
             :loading="isBusy"
-            :disabled="queueStats.pending === 0"
-            @click="handleStart"
+            :disabled="stats.pending === 0"
+            @click="resume"
           >
             开始导入
           </VButton>
@@ -468,14 +395,14 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
 
       <div class=":uno: rounded-base overflow-hidden border">
         <VEntityContainer>
-          <VEntity v-for="item in importQueue" :key="item.id">
+          <VEntity v-for="task in tasks" :key="task.id">
             <template #start>
               <VEntityField>
                 <template #description>
                   <div class=":uno: flex items-center gap-2">
                     <MingcuteMarkdownLine class=":uno: text-blue-500" />
                     <span class=":uno: text-sm text-gray-900">
-                      {{ item.filename }}
+                      {{ task.meta?.name }}
                     </span>
                   </div>
                 </template>
@@ -485,19 +412,19 @@ const showAlert = useSessionStorage('plugin:content-tools:markdown-import-alert'
               <VEntityField>
                 <template #description>
                   <MingcuteLoading3Fill
-                    v-if="item.status === 'processing'"
+                    v-if="task.status === 'running'"
                     class=":uno: animate-spin"
                   />
                   <MingcuteCheckCircleFill
-                    v-else-if="item.status === 'success'"
+                    v-else-if="task.status === 'fulfilled'"
                     class=":uno: text-green-500"
                   />
                   <div
-                    v-else-if="item.status === 'error'"
+                    v-else-if="task.status === 'rejected'"
                     class=":uno: inline-flex items-center gap-2"
                   >
-                    <MingcuteCloseCircleLine v-tooltip="item.error" class=":uno: text-red-500" />
-                    <VButton size="sm" :disabled="isBusy" @click="retryItem(item)"> 重试 </VButton>
+                    <MingcuteCloseCircleLine v-tooltip="task.error?.toString()" class=":uno: text-red-500" />
+                    <VButton size="sm" :disabled="isBusy" @click="retry(task.id)"> 重试 </VButton>
                   </div>
                   <MingcuteTimeLine v-else class=":uno: text-gray-500" />
                 </template>
