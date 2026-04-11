@@ -5,6 +5,8 @@ import 'uno.css';
 import { defineAsyncComponent, h, markRaw, type Ref } from 'vue';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
 
+const POST_EDITOR_PATH = '/console/posts/editor';
+
 export default definePlugin({
   components: {},
   routes: [
@@ -32,8 +34,9 @@ export default definePlugin({
     'editor:create': async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get('name');
+      const pathname = window.location.pathname;
 
-      if (!name) {
+      if (!name || pathname !== POST_EDITOR_PATH) {
         return [];
       }
 
