@@ -1,7 +1,6 @@
 import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
 import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
 import { definePlugin } from '@halo-dev/ui-shared';
-import 'uno.css';
 import { defineAsyncComponent, h, markRaw, type Ref } from 'vue';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
 
