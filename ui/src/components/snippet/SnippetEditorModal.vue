@@ -5,7 +5,7 @@ import { consoleApiClient } from '@halo-dev/api-client';
 import { Toast, VButton, VLoading, VModal, VSpace } from '@halo-dev/components';
 import { ExtensionsKit, RichTextEditor, VueEditor } from '@halo-dev/richtext-editor';
 import { utils } from '@halo-dev/ui-shared';
-import type { AxiosRequestConfig } from 'axios';
+import { isAxiosError, type AxiosRequestConfig } from 'axios';
 import { computed, onBeforeUnmount, onMounted, shallowRef } from 'vue';
 
 interface SnippetEditorForm {
@@ -83,14 +83,10 @@ async function handleSubmit(data: SnippetEditorForm) {
     let saved: ContentSnippet;
 
     if (props.snippet) {
-      const name = props.snippet.metadata.name;
-      const { data: existing } = await contentSnippetApiClient.contentSnippet.getContentSnippet({
-        name,
-      });
       const { data } = await contentSnippetApiClient.contentSnippet.updateContentSnippet({
-        name,
+        name: props.snippet.metadata.name,
         contentSnippet: {
-          ...existing,
+          ...props.snippet,
           spec,
         },
       });
@@ -113,7 +109,11 @@ async function handleSubmit(data: SnippetEditorForm) {
     emit('saved', saved);
   } catch (error) {
     console.error('Failed to save content snippet from picker', error);
-    Toast.error('保存内容片段失败，请重试');
+    if (isAxiosError(error) && error.response?.status === 409) {
+      Toast.error('内容片段已被其他窗口修改，请关闭后重新打开');
+    } else {
+      Toast.error('保存内容片段失败，请重试');
+    }
   } finally {
     saving.value = false;
   }

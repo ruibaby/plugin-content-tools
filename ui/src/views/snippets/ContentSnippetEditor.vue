@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { contentSnippetApiClient } from '@/api';
+import { contentSnippetApiClient, type ContentSnippet } from '@/api';
 import { consoleApiClient } from '@halo-dev/api-client';
 import { IconSave, Toast, VButton, VCard, VLoading, VPageHeader } from '@halo-dev/components';
 import { ExtensionsKit, RichTextEditor, VueEditor } from '@halo-dev/richtext-editor';
 import { utils } from '@halo-dev/ui-shared';
-import type { AxiosRequestConfig } from 'axios';
+import { isAxiosError, type AxiosRequestConfig } from 'axios';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MingcuteCopy2Line from '~icons/mingcute/copy-2-line';
@@ -23,6 +23,7 @@ const form = ref({
 });
 
 const initialContent = ref('');
+const snippet = shallowRef<ContentSnippet>();
 
 const editor = shallowRef<VueEditor>();
 const titleInputRef = ref<HTMLInputElement>();
@@ -71,6 +72,7 @@ async function fetchSnippet() {
     const { data } = await contentSnippetApiClient.contentSnippet.getContentSnippet({
       name: name.value,
     });
+    snippet.value = data;
     form.value.displayName = data.spec.displayName;
     form.value.description = data.spec.description || '';
     initialContent.value = data.spec.content;
@@ -96,6 +98,13 @@ async function handleSave() {
     return;
   }
 
+  const currentSnippet = snippet.value;
+
+  if (name.value && !currentSnippet) {
+    Toast.error('内容片段尚未加载完成，请刷新后重试');
+    return;
+  }
+
   const content = editor.value?.getHTML() || '';
 
   if (!editor.value || editor.value.isEmpty) {
@@ -112,15 +121,11 @@ async function handleSave() {
       content,
     };
 
-    if (name.value) {
-      const { data: existing } = await contentSnippetApiClient.contentSnippet.getContentSnippet({
-        name: name.value,
-      });
-
+    if (name.value && currentSnippet) {
       await contentSnippetApiClient.contentSnippet.updateContentSnippet({
         name: name.value,
         contentSnippet: {
-          ...existing,
+          ...currentSnippet,
           spec,
         },
       });
@@ -141,7 +146,11 @@ async function handleSave() {
     router.push({ name: 'ContentSnippets' });
   } catch (error) {
     console.error('Failed to save content snippet', error);
-    Toast.error('保存内容片段失败');
+    if (isAxiosError(error) && error.response?.status === 409) {
+      Toast.error('内容片段已被其他窗口修改，请刷新页面后重试');
+    } else {
+      Toast.error('保存内容片段失败');
+    }
   } finally {
     saving.value = false;
   }

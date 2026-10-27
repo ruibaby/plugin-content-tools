@@ -14,14 +14,11 @@ export function getSnippetTextPreview(html: string, maxLength = 120) {
 }
 
 export function insertContentSnippet(editor: Editor, snippet: ContentSnippet, range?: Range) {
-  const from = range?.from ?? editor.state.selection.from;
-  const chain = editor.chain().focus();
+  const { selection } = editor.state;
+  const position = range ?? { from: selection.from, to: selection.to };
+  const from = position.from;
 
-  if (range) {
-    chain.deleteRange(range);
-  }
-
-  if (!chain.insertContent(snippet.spec.content).run()) {
+  if (!editor.chain().focus().insertContentAt(position, snippet.spec.content).run()) {
     return false;
   }
 

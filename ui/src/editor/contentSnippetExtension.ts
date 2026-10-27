@@ -33,7 +33,13 @@ async function handleCommand(editor: Editor, range: Range) {
   }
 
   try {
+    const docBefore = editor.state.doc;
     const matches = await findSnippetCommandMatches(query);
+
+    if (editor.state.doc !== docBefore) {
+      Toast.warning('文档已变化，请重新输入 / 插入内容片段');
+      return;
+    }
 
     if (matches.length === 1) {
       if (!insertContentSnippet(editor, matches[0].snippet, range)) {

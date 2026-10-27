@@ -9,6 +9,7 @@ import {
 } from '@/utils/snippetSearch';
 import { Dialog, Toast, VButton, VModal } from '@halo-dev/components';
 import { utils } from '@halo-dev/ui-shared';
+import { isAxiosError } from 'axios';
 import { computed, onMounted, shallowRef } from 'vue';
 
 interface SaveSnippetForm {
@@ -89,16 +90,12 @@ function requestReplace(snippet: ContentSnippet) {
       saving.value = true;
 
       try {
-        const name = snippet.metadata.name;
-        const { data: existing } = await contentSnippetApiClient.contentSnippet.getContentSnippet({
-          name,
-        });
         const { data: saved } = await contentSnippetApiClient.contentSnippet.updateContentSnippet({
-          name,
+          name: snippet.metadata.name,
           contentSnippet: {
-            ...existing,
+            ...snippet,
             spec: {
-              ...existing.spec,
+              ...snippet.spec,
               content: props.content,
             },
           },
@@ -109,7 +106,11 @@ function requestReplace(snippet: ContentSnippet) {
         emit('close');
       } catch (error) {
         console.error('Failed to replace content snippet from selection', error);
-        Toast.error('替换内容片段失败，请重试');
+        if (isAxiosError(error) && error.response?.status === 409) {
+          Toast.error('内容片段已被其他窗口修改，请关闭后重试');
+        } else {
+          Toast.error('替换内容片段失败，请重试');
+        }
       } finally {
         saving.value = false;
       }

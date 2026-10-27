@@ -2,7 +2,7 @@
 import type { ContentSnippet } from '@/api';
 import { contentSnippetApiClient } from '@/api';
 import { getSnippetTextPreview, insertContentSnippet } from '@/utils/snippet';
-import { setSnippetCommandSnippets } from '@/utils/snippetCommand';
+import { refreshSnippetCommandSnippets, setSnippetCommandSnippets } from '@/utils/snippetCommand';
 import { createSnippetSearchEntries, findSnippetSearchEntries } from '@/utils/snippetSearch';
 import {
   Dialog,
@@ -46,11 +46,15 @@ const emit = defineEmits<{
 const visible = ref(false);
 const loading = ref(true);
 const snippets = ref<ContentSnippet[]>([]);
+const snippetsLoaded = ref(false);
 const keyword = ref(props.initialKeyword);
 const searchInputRef = ref<HTMLInputElement>();
 const snippetEditorVisible = shallowRef(false);
 const activeSnippet = shallowRef<ContentSnippet>();
 const searchEntries = computed(() => createSnippetSearchEntries(snippets.value));
+
+let dataRevision = 0;
+let fetchGeneration = 0;
 
 const filteredSnippets = computed(() => {
   const value = keyword.value.trim();
@@ -73,19 +77,34 @@ const filteredSnippets = computed(() => {
 });
 
 async function fetchSnippets() {
+  const requestRevision = dataRevision;
+  const requestGeneration = ++fetchGeneration;
   loading.value = true;
 
   try {
     const { data } = await contentSnippetApiClient.contentSnippet.listContentSnippet({
       sort: ['metadata.creationTimestamp,desc'],
     });
+
+    if (requestGeneration !== fetchGeneration) {
+      return;
+    }
+
+    if (requestRevision !== dataRevision) {
+      void fetchSnippets();
+      return;
+    }
+
     snippets.value = data.items;
+    snippetsLoaded.value = true;
     setSnippetCommandSnippets(data.items);
   } catch (error) {
     console.error('Failed to fetch content snippets', error);
     Toast.error('加载内容片段失败');
   } finally {
-    loading.value = false;
+    if (requestGeneration === fetchGeneration) {
+      loading.value = false;
+    }
   }
 }
 
@@ -106,6 +125,8 @@ function closeSnippetEditor() {
 }
 
 function handleSaved(saved: ContentSnippet) {
+  dataRevision += 1;
+
   const isNew = !activeSnippet.value;
   const exists = snippets.value.some((item) => item.metadata.name === saved.metadata.name);
 
@@ -117,7 +138,13 @@ function handleSaved(saved: ContentSnippet) {
     snippets.value = [saved, ...snippets.value];
   }
 
-  setSnippetCommandSnippets(snippets.value);
+  if (snippetsLoaded.value) {
+    setSnippetCommandSnippets(snippets.value);
+  } else if (!loading.value) {
+    void refreshSnippetCommandSnippets().catch((error) => {
+      console.error('Failed to refresh content snippet commands', error);
+    });
+  }
 
   if (isNew) {
     keyword.value = '';
@@ -139,10 +166,17 @@ function handleDelete(snippet: ContentSnippet) {
           name: snippet.metadata.name,
         });
         Toast.success('删除成功');
+        dataRevision += 1;
         snippets.value = snippets.value.filter(
           (item) => item.metadata.name !== snippet.metadata.name
         );
-        setSnippetCommandSnippets(snippets.value);
+        if (snippetsLoaded.value) {
+          setSnippetCommandSnippets(snippets.value);
+        } else if (!loading.value) {
+          void refreshSnippetCommandSnippets().catch((error) => {
+            console.error('Failed to refresh content snippet commands', error);
+          });
+        }
       } catch (error) {
         console.error('Failed to delete content snippet', error);
         Toast.error('删除内容片段失败');
