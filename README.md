@@ -44,3 +44,7 @@
 ![](./images/plugin-content-tools-preview-6.png)
 
 ![](./images/plugin-content-tools-preview-7.png)
+
+![](./images/plugin-content-tools-preview-8.png)
+
+![](./images/plugin-content-tools-preview-9.png)
