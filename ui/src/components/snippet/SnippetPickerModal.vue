@@ -1,0 +1,166 @@
+<script setup lang="ts">
+import type { ContentSnippet } from '@/api';
+import { contentSnippetApiClient } from '@/api';
+import { getSnippetTextPreview } from '@/utils/snippet';
+import { IconArrowRight, IconSearch, Toast, VEmpty, VLoading, VModal } from '@halo-dev/components';
+import type { Editor, Range } from '@halo-dev/richtext-editor';
+import { computed, nextTick, onMounted, ref, type PropType } from 'vue';
+import MingcuteCopy2Line from '~icons/mingcute/copy-2-line';
+
+const props = defineProps({
+  editor: {
+    type: Object as PropType<Editor>,
+    required: true,
+  },
+  range: {
+    type: Object as PropType<Range>,
+    required: false,
+    default: undefined,
+  },
+});
+
+const emit = defineEmits<{
+  (event: 'close'): void;
+}>();
+
+const visible = ref(false);
+const loading = ref(true);
+const snippets = ref<ContentSnippet[]>([]);
+const keyword = ref('');
+const searchInputRef = ref<HTMLInputElement>();
+
+const filteredSnippets = computed(() => {
+  const value = keyword.value.trim().toLowerCase();
+
+  if (!value) {
+    return snippets.value;
+  }
+
+  return snippets.value.filter((snippet) => {
+    return [snippet.spec.displayName, snippet.spec.description]
+      .filter((item): item is string => !!item)
+      .some((item) => item.toLowerCase().includes(value));
+  });
+});
+
+async function fetchSnippets() {
+  loading.value = true;
+
+  try {
+    const { data } = await contentSnippetApiClient.contentSnippet.listContentSnippet({
+      sort: ['metadata.creationTimestamp,desc'],
+    });
+    snippets.value = data.items;
+  } catch (error) {
+    console.error('Failed to fetch content snippets', error);
+    Toast.error('加载内容片段失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
+function handleSelect(snippet: ContentSnippet) {
+  const chain = props.editor.chain().focus();
+
+  if (props.range) {
+    chain.deleteRange(props.range);
+  }
+
+  const inserted = chain.insertContent(snippet.spec.content).run();
+
+  if (!inserted) {
+    Toast.error('插入内容片段失败');
+    return;
+  }
+
+  emit('close');
+}
+
+onMounted(() => {
+  visible.value = true;
+  fetchSnippets();
+  nextTick(() => searchInputRef.value?.focus());
+});
+</script>
+
+<template>
+  <VModal
+    v-model:visible="visible"
+    title="插入内容片段"
+    aria-label="插入内容片段"
+    :width="640"
+    @close="emit('close')"
+  >
+    <div class=":uno: space-y-3">
+      <div
+        class=":uno: flex h-10 items-center gap-2 rounded-base border border-gray-300 bg-white px-3 transition-all focus-within:border-primary focus-within:shadow-sm"
+      >
+        <IconSearch class=":uno: size-4 shrink-0 text-gray-400" />
+        <input
+          ref="searchInputRef"
+          v-model="keyword"
+          type="text"
+          aria-label="搜索内容片段"
+          placeholder="搜索名称或描述"
+          class=":uno: h-full min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+        />
+      </div>
+
+      <div v-if="!loading && snippets.length" class=":uno: flex items-center justify-between px-1">
+        <span class=":uno: text-xs text-gray-500">
+          {{ keyword ? `${filteredSnippets.length} 个匹配结果` : `共 ${snippets.length} 个片段` }}
+        </span>
+        <span class=":uno: hidden text-xs text-gray-500 sm:inline">选择后插入到当前位置</span>
+      </div>
+
+      <div v-if="loading" class=":uno: min-h-[180px]">
+        <VLoading />
+      </div>
+
+      <VEmpty
+        v-else-if="!filteredSnippets.length"
+        :title="keyword ? '没有匹配的内容片段' : '暂无内容片段'"
+        :message="keyword ? '试试其他关键词' : '请先在「工具 - 内容片段」中创建可复用的内容片段'"
+      />
+
+      <div v-else class=":uno: max-h-[48vh] space-y-2 overflow-y-auto pr-1">
+        <button
+          v-for="snippet in filteredSnippets"
+          :key="snippet.metadata.name"
+          type="button"
+          class=":uno: group flex w-full items-center gap-3 rounded-base border border-gray-200 bg-white p-3 text-left transition-all hover:border-primary hover:bg-primary/5 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+          @click="handleSelect(snippet)"
+        >
+          <span
+            class=":uno: flex size-9 shrink-0 items-center justify-center rounded-base bg-gray-100 text-gray-500 transition-colors group-hover:bg-primary/10 group-hover:text-primary group-focus-visible:bg-primary/10 group-focus-visible:text-primary"
+          >
+            <MingcuteCopy2Line class=":uno: size-4" />
+          </span>
+          <span class=":uno: min-w-0 flex-1">
+            <span class=":uno: block truncate text-sm font-medium text-gray-900">
+              {{ snippet.spec.displayName }}
+            </span>
+            <span class=":uno: mt-1 line-clamp-2 block text-xs leading-5 text-gray-500">
+              {{ snippet.spec.description || getSnippetTextPreview(snippet.spec.content, 100) }}
+            </span>
+          </span>
+          <IconArrowRight
+            class=":uno: size-4 shrink-0 text-gray-400 transition-all group-hover:translate-x-0.5 group-hover:text-primary group-focus-visible:text-primary sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100"
+          />
+        </button>
+      </div>
+    </div>
+
+    <template #footer>
+      <div class=":uno: flex w-full items-center justify-between gap-3 text-xs text-gray-500">
+        <span>插入的是片段当前内容，后续修改不会同步到已插入的文章</span>
+        <span class=":uno: hidden shrink-0 items-center gap-1.5 sm:flex">
+          <kbd class=":uno: rounded-base border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-xs">
+            Esc
+          </kbd>
+          关闭
+        </span>
+      </div>
+    </template>
+  </VModal>
+</template>
