@@ -5,9 +5,10 @@ import {
   getHTMLFromFragment,
   type BubbleItemComponentProps,
 } from '@halo-dev/richtext-editor';
-import { shallowRef } from 'vue';
+import { defineAsyncComponent, shallowRef } from 'vue';
 import MingcuteSave2Line from '~icons/mingcute/save-2-line';
-import SaveSnippetModal from './SaveSnippetModal.vue';
+
+const SaveSnippetModal = defineAsyncComponent(() => import('./SaveSnippetModal.vue'));
 
 const { editor } = defineProps<BubbleItemComponentProps>();
 

@@ -12,7 +12,7 @@ export function closeSnippetPicker() {
   }
 }
 
-export async function openSnippetPicker(editor: Editor, range?: Range) {
+export async function openSnippetPicker(editor: Editor, range?: Range, initialKeyword = '') {
   closeSnippetPicker();
 
   const currentRequestId = ++requestId;
@@ -30,6 +30,7 @@ export async function openSnippetPicker(editor: Editor, range?: Range) {
     const vnode = h(SnippetPickerModal, {
       editor,
       range,
+      initialKeyword,
       onClose: closeSnippetPicker,
     });
 

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { ContentSnippet } from '@/api';
 import { contentSnippetApiClient } from '@/api';
-import { getSnippetTextPreview } from '@/utils/snippet';
+import { getSnippetTextPreview, insertContentSnippet } from '@/utils/snippet';
+import { setSnippetCommandSnippets } from '@/utils/snippetCommand';
+import { createSnippetSearchEntries, findSnippetSearchEntries } from '@/utils/snippetSearch';
 import {
   Dialog,
   IconAddCircle,
@@ -30,6 +32,11 @@ const props = defineProps({
     required: false,
     default: undefined,
   },
+  initialKeyword: {
+    type: String,
+    required: false,
+    default: '',
+  },
 });
 
 const emit = defineEmits<{
@@ -39,22 +46,29 @@ const emit = defineEmits<{
 const visible = ref(false);
 const loading = ref(true);
 const snippets = ref<ContentSnippet[]>([]);
-const keyword = ref('');
+const keyword = ref(props.initialKeyword);
 const searchInputRef = ref<HTMLInputElement>();
 const snippetEditorVisible = shallowRef(false);
 const activeSnippet = shallowRef<ContentSnippet>();
+const searchEntries = computed(() => createSnippetSearchEntries(snippets.value));
 
 const filteredSnippets = computed(() => {
-  const value = keyword.value.trim().toLowerCase();
+  const value = keyword.value.trim();
 
   if (!value) {
     return snippets.value;
   }
 
+  const nameMatches = new Set(
+    findSnippetSearchEntries(searchEntries.value, value).map((entry) => entry.snippet.metadata.name)
+  );
+  const descriptionQuery = value.toLocaleLowerCase();
+
   return snippets.value.filter((snippet) => {
-    return [snippet.spec.displayName, snippet.spec.description]
-      .filter((item): item is string => !!item)
-      .some((item) => item.toLowerCase().includes(value));
+    return (
+      nameMatches.has(snippet.metadata.name) ||
+      snippet.spec.description?.toLocaleLowerCase().includes(descriptionQuery)
+    );
   });
 });
 
@@ -66,6 +80,7 @@ async function fetchSnippets() {
       sort: ['metadata.creationTimestamp,desc'],
     });
     snippets.value = data.items;
+    setSnippetCommandSnippets(data.items);
   } catch (error) {
     console.error('Failed to fetch content snippets', error);
     Toast.error('加载内容片段失败');
@@ -102,6 +117,8 @@ function handleSaved(saved: ContentSnippet) {
     snippets.value = [saved, ...snippets.value];
   }
 
+  setSnippetCommandSnippets(snippets.value);
+
   if (isNew) {
     keyword.value = '';
   }
@@ -125,6 +142,7 @@ function handleDelete(snippet: ContentSnippet) {
         snippets.value = snippets.value.filter(
           (item) => item.metadata.name !== snippet.metadata.name
         );
+        setSnippetCommandSnippets(snippets.value);
       } catch (error) {
         console.error('Failed to delete content snippet', error);
         Toast.error('删除内容片段失败');
@@ -134,13 +152,7 @@ function handleDelete(snippet: ContentSnippet) {
 }
 
 function handleSelect(snippet: ContentSnippet) {
-  const chain = props.editor.chain().focus();
-
-  if (props.range) {
-    chain.deleteRange(props.range);
-  }
-
-  const inserted = chain.insertContent(snippet.spec.content).run();
+  const inserted = insertContentSnippet(props.editor, snippet, props.range);
 
   if (!inserted) {
     Toast.error('插入内容片段失败');
