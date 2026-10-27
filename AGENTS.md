@@ -13,7 +13,7 @@ This repository implements Halo’s Content Tools plugin (`content-tools`), prov
 
 ## Build, Test, and Development Commands
 
-Use Java 21, Node.js 24 (matching CI), and pnpm 10.33.0 (pinned in `ui/package.json`). Run these commands from the repository root:
+Use Java 21, Node.js 24 (matching CI), and pnpm 12.15.0 (pinned in `ui/package.json`). Run these commands from the repository root:
 
 - `pnpm --dir ui install --frozen-lockfile`: install UI dependencies.
 - `./gradlew build`: build the UI and plugin JAR and run configured checks; JARs appear in `build/libs/`.
