@@ -2,10 +2,23 @@
 import type { ContentSnippet } from '@/api';
 import { contentSnippetApiClient } from '@/api';
 import { getSnippetTextPreview } from '@/utils/snippet';
-import { IconArrowRight, IconSearch, Toast, VEmpty, VLoading, VModal } from '@halo-dev/components';
+import {
+  Dialog,
+  IconAddCircle,
+  IconArrowRight,
+  IconSearch,
+  Toast,
+  VButton,
+  VEmpty,
+  VLoading,
+  VModal,
+} from '@halo-dev/components';
 import type { Editor, Range } from '@halo-dev/richtext-editor';
-import { computed, nextTick, onMounted, ref, type PropType } from 'vue';
+import { computed, nextTick, onMounted, ref, shallowRef, type PropType } from 'vue';
 import MingcuteCopy2Line from '~icons/mingcute/copy-2-line';
+import MingcuteDelete2Line from '~icons/mingcute/delete-2-line';
+import MingcuteEdit2Line from '~icons/mingcute/edit-2-line';
+import SnippetEditorModal from './SnippetEditorModal.vue';
 
 const props = defineProps({
   editor: {
@@ -28,6 +41,8 @@ const loading = ref(true);
 const snippets = ref<ContentSnippet[]>([]);
 const keyword = ref('');
 const searchInputRef = ref<HTMLInputElement>();
+const snippetEditorVisible = shallowRef(false);
+const activeSnippet = shallowRef<ContentSnippet>();
 
 const filteredSnippets = computed(() => {
   const value = keyword.value.trim().toLowerCase();
@@ -57,6 +72,65 @@ async function fetchSnippets() {
   } finally {
     loading.value = false;
   }
+}
+
+function handleCreate() {
+  activeSnippet.value = undefined;
+  snippetEditorVisible.value = true;
+}
+
+function handleEdit(snippet: ContentSnippet) {
+  activeSnippet.value = snippet;
+  snippetEditorVisible.value = true;
+}
+
+function closeSnippetEditor() {
+  snippetEditorVisible.value = false;
+  activeSnippet.value = undefined;
+  nextTick(() => searchInputRef.value?.focus());
+}
+
+function handleSaved(saved: ContentSnippet) {
+  const isNew = !activeSnippet.value;
+  const exists = snippets.value.some((item) => item.metadata.name === saved.metadata.name);
+
+  if (exists) {
+    snippets.value = snippets.value.map((item) =>
+      item.metadata.name === saved.metadata.name ? saved : item
+    );
+  } else {
+    snippets.value = [saved, ...snippets.value];
+  }
+
+  if (isNew) {
+    keyword.value = '';
+  }
+
+  closeSnippetEditor();
+}
+
+function handleDelete(snippet: ContentSnippet) {
+  Dialog.warning({
+    title: '删除内容片段',
+    description: `确定要删除「${snippet.spec.displayName}」吗？删除后无法恢复，已插入文章中的内容不会受到影响。`,
+    confirmType: 'danger',
+    confirmText: '删除',
+    cancelText: '取消',
+    onConfirm: async () => {
+      try {
+        await contentSnippetApiClient.contentSnippet.deleteContentSnippet({
+          name: snippet.metadata.name,
+        });
+        Toast.success('删除成功');
+        snippets.value = snippets.value.filter(
+          (item) => item.metadata.name !== snippet.metadata.name
+        );
+      } catch (error) {
+        console.error('Failed to delete content snippet', error);
+        Toast.error('删除内容片段失败');
+      }
+    },
+  });
 }
 
 function handleSelect(snippet: ContentSnippet) {
@@ -92,18 +166,26 @@ onMounted(() => {
     @close="emit('close')"
   >
     <div class=":uno: space-y-3">
-      <div
-        class=":uno: flex h-10 items-center gap-2 rounded-base border border-gray-300 bg-white px-3 transition-all focus-within:border-primary focus-within:shadow-sm"
-      >
-        <IconSearch class=":uno: size-4 shrink-0 text-gray-400" />
-        <input
-          ref="searchInputRef"
-          v-model="keyword"
-          type="text"
-          aria-label="搜索内容片段"
-          placeholder="搜索名称或描述"
-          class=":uno: h-full min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-        />
+      <div class=":uno: flex gap-2">
+        <div
+          class=":uno: flex h-10 min-w-0 flex-1 items-center gap-2 rounded-base border border-gray-300 bg-white px-3 transition-all focus-within:border-primary focus-within:shadow-sm"
+        >
+          <IconSearch class=":uno: size-4 shrink-0 text-gray-400" />
+          <input
+            ref="searchInputRef"
+            v-model="keyword"
+            type="text"
+            aria-label="搜索内容片段"
+            placeholder="搜索名称或描述"
+            class=":uno: h-full min-w-0 flex-1 border-none bg-transparent p-0 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        </div>
+        <VButton type="secondary" class=":uno: h-10 shrink-0" @click="handleCreate">
+          <template #icon>
+            <IconAddCircle />
+          </template>
+          新建片段
+        </VButton>
       </div>
 
       <div v-if="!loading && snippets.length" class=":uno: flex items-center justify-between px-1">
@@ -120,34 +202,71 @@ onMounted(() => {
       <VEmpty
         v-else-if="!filteredSnippets.length"
         :title="keyword ? '没有匹配的内容片段' : '暂无内容片段'"
-        :message="keyword ? '试试其他关键词' : '请先在「工具 - 内容片段」中创建可复用的内容片段'"
-      />
+        :message="keyword ? '试试其他关键词，或清除当前搜索' : '新建后即可插入到当前文章'"
+      >
+        <template #actions>
+          <VButton v-if="keyword" @click="keyword = ''">清除搜索</VButton>
+          <VButton v-else type="secondary" @click="handleCreate">新建片段</VButton>
+        </template>
+      </VEmpty>
 
       <div v-else class=":uno: max-h-[48vh] space-y-2 overflow-y-auto pr-1">
-        <button
+        <div
           v-for="snippet in filteredSnippets"
           :key="snippet.metadata.name"
-          type="button"
-          class=":uno: group flex w-full items-center gap-3 rounded-base border border-gray-200 bg-white p-3 text-left transition-all hover:border-primary hover:bg-primary/5 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-          @click="handleSelect(snippet)"
+          class=":uno: group flex items-stretch rounded-base border border-gray-200 bg-white transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 hover:border-primary hover:bg-primary/5"
         >
-          <span
-            class=":uno: flex size-9 shrink-0 items-center justify-center rounded-base bg-gray-100 text-gray-500 transition-colors group-hover:bg-primary/10 group-hover:text-primary group-focus-visible:bg-primary/10 group-focus-visible:text-primary"
+          <button
+            type="button"
+            class=":uno: flex min-w-0 flex-1 items-center gap-3 p-3 text-left focus-visible:outline-none"
+            @click="handleSelect(snippet)"
           >
-            <MingcuteCopy2Line class=":uno: size-4" />
-          </span>
-          <span class=":uno: min-w-0 flex-1">
-            <span class=":uno: block truncate text-sm font-medium text-gray-900">
-              {{ snippet.spec.displayName }}
+            <span
+              class=":uno: flex size-9 shrink-0 items-center justify-center rounded-base bg-gray-100 text-gray-500 transition-colors group-focus-within:bg-primary/10 group-focus-within:text-primary group-hover:bg-primary/10 group-hover:text-primary"
+            >
+              <MingcuteCopy2Line class=":uno: size-4" />
             </span>
-            <span class=":uno: mt-1 line-clamp-2 block text-xs leading-5 text-gray-500">
-              {{ snippet.spec.description || getSnippetTextPreview(snippet.spec.content, 100) }}
+            <span class=":uno: min-w-0 flex-1">
+              <span class=":uno: block truncate text-sm font-medium text-gray-900">
+                {{ snippet.spec.displayName }}
+              </span>
+              <span
+                v-if="snippet.spec.description"
+                class=":uno: mt-0.5 block truncate text-xs leading-5 text-gray-500"
+                :title="snippet.spec.description"
+              >
+                {{ snippet.spec.description }}
+              </span>
+              <span class=":uno: line-clamp-2 block text-xs leading-5 text-gray-500">
+                <span class=":uno: font-medium text-gray-500">摘要：</span>
+                {{ getSnippetTextPreview(snippet.spec.content, 100) || '暂无内容摘要' }}
+              </span>
             </span>
-          </span>
-          <IconArrowRight
-            class=":uno: size-4 shrink-0 text-gray-400 transition-all group-hover:translate-x-0.5 group-hover:text-primary group-focus-visible:text-primary sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100"
-          />
-        </button>
+            <IconArrowRight
+              class=":uno: hidden size-4 shrink-0 text-gray-400 transition-all group-focus-within:text-primary group-hover:translate-x-0.5 group-hover:text-primary sm:block"
+            />
+          </button>
+          <div class=":uno: flex shrink-0 items-center gap-1 border-l border-gray-100 px-2">
+            <button
+              type="button"
+              class=":uno: flex size-8 items-center justify-center rounded-base text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+              :aria-label="`编辑「${snippet.spec.displayName}」`"
+              :title="`编辑「${snippet.spec.displayName}」`"
+              @click="handleEdit(snippet)"
+            >
+              <MingcuteEdit2Line class=":uno: size-4" />
+            </button>
+            <button
+              type="button"
+              class=":uno: flex size-8 items-center justify-center rounded-base text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+              :aria-label="`删除「${snippet.spec.displayName}」`"
+              :title="`删除「${snippet.spec.displayName}」`"
+              @click="handleDelete(snippet)"
+            >
+              <MingcuteDelete2Line class=":uno: size-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -163,4 +282,11 @@ onMounted(() => {
       </div>
     </template>
   </VModal>
+
+  <SnippetEditorModal
+    v-if="snippetEditorVisible"
+    :snippet="activeSnippet"
+    @close="closeSnippetEditor"
+    @saved="handleSaved"
+  />
 </template>

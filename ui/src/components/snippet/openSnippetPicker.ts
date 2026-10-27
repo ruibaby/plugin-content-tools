@@ -1,15 +1,15 @@
-import type { Editor, Range } from '@halo-dev/richtext-editor';
-import { createApp, h, type App } from 'vue';
+import { VueEditor, type Editor, type Range } from '@halo-dev/richtext-editor';
+import { h, render } from 'vue';
 
-let pickerApp: App | undefined;
 let pickerContainer: HTMLDivElement | undefined;
 let requestId = 0;
 
 export function closeSnippetPicker() {
-  pickerApp?.unmount();
-  pickerContainer?.remove();
-  pickerApp = undefined;
-  pickerContainer = undefined;
+  if (pickerContainer) {
+    render(null, pickerContainer);
+    pickerContainer.remove();
+    pickerContainer = undefined;
+  }
 }
 
 export async function openSnippetPicker(editor: Editor, range?: Range) {
@@ -27,18 +27,18 @@ export async function openSnippetPicker(editor: Editor, range?: Range) {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const app = createApp({
-      render: () =>
-        h(SnippetPickerModal, {
-          editor,
-          range,
-          onClose: closeSnippetPicker,
-        }),
+    const vnode = h(SnippetPickerModal, {
+      editor,
+      range,
+      onClose: closeSnippetPicker,
     });
 
-    pickerApp = app;
+    if (editor instanceof VueEditor) {
+      vnode.appContext = editor.appContext;
+    }
+
     pickerContainer = container;
-    app.mount(container);
+    render(vnode, container);
   } catch (error) {
     console.error('Failed to open content snippet picker', error);
   }
