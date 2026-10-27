@@ -228,7 +228,7 @@ onMounted(() => {
         <div
           v-for="snippet in filteredSnippets"
           :key="snippet.metadata.name"
-          class=":uno: group flex items-stretch rounded-base border border-gray-200 bg-white transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 hover:border-primary hover:bg-primary/5"
+          class=":uno: group flex items-stretch rounded-base border border-gray-200 bg-white transition-colors hover:border-gray-300 hover:bg-gray-50 focus-within:border-gray-300 focus-within:bg-gray-50"
         >
           <button
             type="button"
