@@ -1,6 +1,6 @@
 import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
 import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
-import { definePlugin } from '@halo-dev/ui-shared';
+import { definePlugin, utils } from '@halo-dev/ui-shared';
 import { defineAsyncComponent, h, markRaw, type Ref } from 'vue';
 import MingcuteCopy2Line from '~icons/mingcute/copy-2-line';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
@@ -76,6 +76,10 @@ export default definePlugin({
   ],
   extensionPoints: {
     'default:editor:extension:create': () => {
+      if (!utils.permission.has(['*'])) {
+        return [];
+      }
+
       return [ContentSnippetExtension];
     },
     'editor:create': async () => {
