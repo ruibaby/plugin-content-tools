@@ -103,7 +103,7 @@ onMounted(fetchSnippets);
       <MingcuteCopy2Line />
     </template>
     <template #actions>
-      <VButton type="primary" @click="handleCreate">
+      <VButton type="secondary" @click="handleCreate">
         <template #icon>
           <IconAddCircle />
         </template>
@@ -162,7 +162,7 @@ onMounted(fetchSnippets);
       >
         <template #actions>
           <VButton v-if="keyword" @click="keyword = ''">清除搜索</VButton>
-          <VButton v-else type="primary" @click="handleCreate">新建片段</VButton>
+          <VButton v-else type="secondary" @click="handleCreate">新建片段</VButton>
         </template>
       </VEmpty>
 

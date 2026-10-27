@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
     </template>
     <template #actions>
       <VButton @click="handleBack">返回</VButton>
-      <VButton type="primary" :loading="saving" :disabled="loading" @click="handleSave">
+      <VButton type="secondary" :loading="saving" :disabled="loading" @click="handleSave">
         <template #icon>
           <IconSave />
         </template>

@@ -2,7 +2,7 @@
 import type { ContentSnippet } from '@/api';
 import { contentSnippetApiClient } from '@/api';
 import { consoleApiClient } from '@halo-dev/api-client';
-import { Toast, VButton, VLoading, VModal } from '@halo-dev/components';
+import { Toast, VButton, VLoading, VModal, VSpace } from '@halo-dev/components';
 import { ExtensionsKit, RichTextEditor, VueEditor } from '@halo-dev/richtext-editor';
 import { utils } from '@halo-dev/ui-shared';
 import type { AxiosRequestConfig } from 'axios';
@@ -171,6 +171,7 @@ onBeforeUnmount(() => {
     height="720px"
     :body-class="['!p-0', 'flex', 'min-h-0', 'flex-col']"
     mount-to-body
+    :centered="false"
     @close="emit('close')"
   >
     <div class=":uno: flex min-h-0 flex-1 flex-col">
@@ -198,7 +199,7 @@ onBeforeUnmount(() => {
               :maxlength="100"
             />
             <FormKit
-              type="textarea"
+              type="text"
               name="description"
               label="片段描述（可选）"
               placeholder="说明片段的用途，方便搜索和识别"
@@ -208,7 +209,6 @@ onBeforeUnmount(() => {
                 length: '片段描述不能超过 500 个字符',
               }"
               :maxlength="500"
-              rows="2"
             />
           </div>
         </FormKit>
@@ -227,8 +227,7 @@ onBeforeUnmount(() => {
     </div>
 
     <template #footer>
-      <div class=":uno: flex justify-end gap-2">
-        <VButton :disabled="saving" @click="emit('close')">取消</VButton>
+      <VSpace>
         <VButton
           type="secondary"
           :loading="saving"
@@ -237,7 +236,8 @@ onBeforeUnmount(() => {
         >
           保存片段
         </VButton>
-      </div>
+        <VButton :disabled="saving" @click="emit('close')">取消</VButton>
+      </VSpace>
     </template>
   </VModal>
 </template>

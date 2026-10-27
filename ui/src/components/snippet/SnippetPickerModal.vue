@@ -175,6 +175,8 @@ onMounted(() => {
     title="插入内容片段"
     aria-label="插入内容片段"
     :width="640"
+    mount-to-body
+    :centered="false"
     @close="emit('close')"
   >
     <div class=":uno: space-y-3">
