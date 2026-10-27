@@ -1,8 +1,10 @@
 import { consoleApiClient, type ListedPost } from '@halo-dev/api-client';
 import { Dialog, VDropdownDivider, VDropdownItem, VLoading } from '@halo-dev/components';
-import { definePlugin } from '@halo-dev/ui-shared';
+import { definePlugin, utils } from '@halo-dev/ui-shared';
 import { defineAsyncComponent, h, markRaw, type Ref } from 'vue';
+import MingcuteCopy2Line from '~icons/mingcute/copy-2-line';
 import MingcuteFileImportLine from '~icons/mingcute/file-import-line';
+import { ContentSnippetExtension } from './editor/contentSnippetExtension';
 
 const POST_EDITOR_PATH = '/console/posts/editor';
 
@@ -28,8 +30,58 @@ export default definePlugin({
         },
       },
     },
+    {
+      parentName: 'ToolsRoot',
+      route: {
+        path: 'content-snippets',
+        name: 'ContentSnippets',
+        component: () => import('./views/snippets/ContentSnippetList.vue'),
+        meta: {
+          title: '内容片段',
+          description: '管理可复用的内容片段',
+          searchable: true,
+          permissions: ['*'],
+          menu: {
+            name: '内容片段',
+            icon: markRaw(MingcuteCopy2Line),
+            priority: 1,
+          },
+        },
+      },
+    },
+    {
+      parentName: 'ToolsRoot',
+      route: {
+        path: 'content-snippets/create',
+        name: 'ContentSnippetCreate',
+        component: () => import('./views/snippets/ContentSnippetEditor.vue'),
+        meta: {
+          title: '新建内容片段',
+          permissions: ['*'],
+        },
+      },
+    },
+    {
+      parentName: 'ToolsRoot',
+      route: {
+        path: 'content-snippets/:name/edit',
+        name: 'ContentSnippetEdit',
+        component: () => import('./views/snippets/ContentSnippetEditor.vue'),
+        meta: {
+          title: '编辑内容片段',
+          permissions: ['*'],
+        },
+      },
+    },
   ],
   extensionPoints: {
+    'default:editor:extension:create': () => {
+      if (!utils.permission.has(['*'])) {
+        return [];
+      }
+
+      return [ContentSnippetExtension];
+    },
     'editor:create': async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const name = urlParams.get('name');

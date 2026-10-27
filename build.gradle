@@ -46,6 +46,23 @@ tasks.named('classes') {
 }
 
 halo {
+    port = 8091
     version = '2.26.0'
 }
 
+haloPlugin {
+    openApi {
+        groupingRules {
+            contentSnippetApis {
+                displayName = 'Content Snippet API for content-tools'
+                pathsToMatch = ['/apis/content-tools.halo.run/v1alpha1/**']
+            }
+        }
+        groupedApiMappings = [
+            '/v3/api-docs/contentSnippetApis': 'contentSnippetApis.json'
+        ]
+        generator {
+            outputDir = file("${projectDir}/ui/src/api/generated")
+        }
+    }
+}
