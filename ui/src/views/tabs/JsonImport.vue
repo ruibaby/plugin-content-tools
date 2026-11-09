@@ -355,7 +355,8 @@ function preparePostRequestForImport(postRequest: PostRequest): PostRequest {
 
   postRequest.post.spec.publish = false;
   postRequest.post.spec.publishTime = undefined;
-  postRequest.post.spec.owner = '';
+  // Clear owner (do not set '') so Halo draftPost() fills the current user.
+  delete postRequest.post.spec.owner;
   postRequest.post.spec.pinned = false;
   postRequest.post.spec.template = '';
 
